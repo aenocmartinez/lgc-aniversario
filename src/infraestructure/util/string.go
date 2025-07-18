@@ -12,3 +12,11 @@ func ConvertStringToID(idStr string) (int64, error) {
 	}
 	return id, nil
 }
+
+func ConvertStringToInt(valueStr string) (int, error) {
+	i, err := strconv.Atoi(valueStr)
+	if err != nil || i <= 0 {
+		return 0, errors.New("valor entero inválido")
+	}
+	return i, nil
+}

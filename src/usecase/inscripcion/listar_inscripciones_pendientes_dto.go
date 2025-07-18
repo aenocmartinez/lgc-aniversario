@@ -17,7 +17,7 @@ func NewListarInscripcionesPendientesUseCase(inscripcionRepo domain.InscripcionR
 
 func (uc *ListarInscripcionesPendientesUseCase) Execute() dto.APIResponse {
 
-	result := uc.inscripcionRepo.ListarInscripcionesPorEstado("Pendiente")
+	result := uc.inscripcionRepo.ListarInscripcionesPorEstado("PreAprobada")
 
 	inscripciones := []dto.InscripcionDTO{}
 	for _, inscripcion := range result {

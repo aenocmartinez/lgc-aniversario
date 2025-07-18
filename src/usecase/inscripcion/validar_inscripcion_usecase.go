@@ -22,8 +22,8 @@ func (uc *ValidarInscripcionUseCase) Execute(inscripcionID int64) dto.APIRespons
 		return dto.NewAPIResponse(404, "Inscripción no encontrada", nil)
 	}
 
-	if inscripcion.EsValida() {
-		return dto.NewAPIResponse(200, "La inscripción ya ha sido validada.", nil)
+	if inscripcion.EstaAprobada() {
+		return dto.NewAPIResponse(200, "La inscripción ya ha sido aprobada.", nil)
 	}
 
 	exito := inscripcion.Aprobar()

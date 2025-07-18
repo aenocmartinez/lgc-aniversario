@@ -13,7 +13,8 @@ type InscripcionRepository interface {
 	BuscarPorID(inscripcionID int64) *Inscripcion
 	BuscarPorDocumento(documento string) *Inscripcion
 	ListarInscripcionesPorEstado(estado string) []Inscripcion
+	TotalInscripcionesPresenciales() int
 	Listar() []Inscripcion
-	InscripcionValidada(inscripcionID int64) bool
-	Validar(inscripcionID int64, validado bool) bool
+	InscripcionAprobada(inscripcionID int64) bool
+	Aprobar(inscripcionID int64, validado bool) bool
 }

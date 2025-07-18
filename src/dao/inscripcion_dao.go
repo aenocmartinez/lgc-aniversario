@@ -119,14 +119,14 @@ func (i *InscripcionDao) Listar() []domain.Inscripcion {
 	return lista
 }
 
-func (i *InscripcionDao) InscripcionValidada(inscripcionID int64) bool {
+func (i *InscripcionDao) InscripcionAprobada(inscripcionID int64) bool {
 	var estado string
 	err := i.db.Table("formularios").Select("estado").Where("id = ?", inscripcionID).Scan(&estado).Error
 	return err == nil && estado == "Aprobada"
 }
 
-func (i *InscripcionDao) Validar(inscripcionID int64, validado bool) bool {
-	nuevoEstado := "Pendiente"
+func (i *InscripcionDao) Aprobar(inscripcionID int64, validado bool) bool {
+	nuevoEstado := "PreAprobada"
 	if validado {
 		nuevoEstado = "Aprobada"
 	}
@@ -136,4 +136,17 @@ func (i *InscripcionDao) Validar(inscripcionID int64, validado bool) bool {
 
 	fmt.Println(result.Error)
 	return result.Error == nil && result.RowsAffected > 0
+}
+
+func (i *InscripcionDao) TotalInscripcionesPresenciales() int {
+	var total int64
+	err := i.db.Table("formularios").
+		Where("asistencia = ?", "Presencial").
+		Where("estado IN ?", []string{"PreAprobada", "Aprobada"}).
+		Count(&total).Error
+
+	if err != nil {
+		return 0
+	}
+	return int(total) + 1
 }

@@ -10,6 +10,7 @@ type InscripcionDTO struct {
 	Iglesia        string `json:"iglesia,omitempty"`
 	HabeasData     bool   `json:"habeas_data"`
 	Estado         string `json:"estado"`
+	Revisada       bool   `json:"revisada"`
 	Asistencia     string `json:"asistencia"`
 	ComprobatePago string `json:"comprobante_pago"`
 	FechaRegistro  string `json:"fecha_inscripcion"`

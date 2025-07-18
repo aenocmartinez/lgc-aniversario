@@ -128,12 +128,16 @@ func (f *Inscripcion) Existe() bool {
 	return f.id > 0
 }
 
-func (f *Inscripcion) EsValida() bool {
-	return f.inscripcionRepo.InscripcionValidada(f.id)
+func (f *Inscripcion) EstaAprobada() bool {
+	return f.estado == "Aprobada"
+}
+
+func (f *Inscripcion) EstaPreAprobada() bool {
+	return f.estado == "PreAprobada"
 }
 
 func (f *Inscripcion) Aprobar() bool {
-	return f.inscripcionRepo.Validar(f.id, true)
+	return f.inscripcionRepo.Aprobar(f.id, true)
 }
 
 func (f *Inscripcion) ToDTO() dto.InscripcionDTO {

@@ -3,8 +3,10 @@ package usecase
 import (
 	"fmt"
 	"lgc/src/domain"
+	"lgc/src/infraestructure/util"
 	"lgc/src/view/dto"
 	formrequest "lgc/src/view/form-request"
+	"os"
 )
 
 type RealizarInscripcionUseCase struct {
@@ -19,22 +21,34 @@ func NewRealizarInscripcionUseCase(inscripcionRepo domain.InscripcionRepository)
 
 func (uc *RealizarInscripcionUseCase) Execute(req formrequest.InscripcionFormRequest) dto.APIResponse {
 
+	cupoMax, err := util.ConvertStringToInt(os.Getenv("APP_CUPO_MAX"))
+	if err != nil {
+		cupoMax = 400
+	}
+
+	totalInscripcionesPresenciales := uc.inscripcionRepo.TotalInscripcionesPresenciales()
+	if totalInscripcionesPresenciales > cupoMax {
+		return dto.NewAPIResponse(200, "El cupo disponible ha sido completado, por lo tanto, no es posible procesar nuevas inscripciones.", nil)
+	}
+
 	inscripcion := uc.inscripcionRepo.BuscarPorDocumento(req.Documento)
 	if inscripcion.Existe() {
-		if inscripcion.EsValida() {
+
+		if inscripcion.EstaAprobada() {
 			return dto.NewAPIResponse(
 				200,
-				fmt.Sprintf("El documento %s ya tiene una inscripción validada. Su participación en el evento ha sido confirmada.", req.Documento),
+				fmt.Sprintf("El documento %s ya tiene una inscripción aprobada. Su participación en el evento ha sido confirmada.", req.Documento),
 				inscripcion.ToDTO(),
 			)
-		} else {
+		}
+
+		if inscripcion.EstaPreAprobada() {
 			return dto.NewAPIResponse(
 				200,
 				fmt.Sprintf("El documento %s ya cuenta con una inscripción registrada y se encuentra en proceso de validación.", req.Documento),
 				inscripcion.ToDTO(),
 			)
 		}
-
 	}
 
 	inscripcion.SetNombre(req.Nombre)
@@ -46,7 +60,7 @@ func (uc *RealizarInscripcionUseCase) Execute(req formrequest.InscripcionFormReq
 	inscripcion.SetAsistencia(req.Asistencia)
 	inscripcion.SetCiudad(req.Ciudad)
 	inscripcion.SetIglesia(req.Iglesia)
-	inscripcion.SetEstado("Pendiente")
+	inscripcion.SetEstado("PreAprobada")
 
 	exito := inscripcion.Crear()
 
