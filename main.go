@@ -29,21 +29,20 @@ func main() {
 	r.GET("/mutant", controller.Mutant)
 
 	// Formulario inscripcion
-	r.POST("/formulario-inscripcion", controller.RealizarInscripcion)
+	r.POST("/realizar-inscripcion", controller.RealizarInscripcion)
 
 	protected := r.Group("/api")
 	protected.Use(middleware.AuthMiddleware())
 	{
-		// 	protected.GET("/secure-data", controller.SecureData)
-		// 	protected.POST("/logout", controller.Logout)
+		protected.POST("/logout", controller.Logout)
 
-		// 	cursoGroup := protected.Group("/cursos")
-		// 	{
-		// 		cursoGroup.GET("", controller.ListarCursos)
-		// 		cursoGroup.POST("", controller.CrearCurso)
-		// 		cursoGroup.PUT("/:id", controller.ActualizarCurso)
-		// 		cursoGroup.DELETE("/:id", controller.EliminarCurso)
-		// 	}
+		// cursoGroup := protected.Group("/inscripciones")
+		// {
+		// 	cursoGroup.GET("", controller.Lis)
+		// 	cursoGroup.POST("", controller.CrearCurso)
+		// 	cursoGroup.PUT("/:id", controller.ActualizarCurso)
+		// 	cursoGroup.DELETE("/:id", controller.EliminarCurso)
+		// }
 
 		// 	periodoGroup := protected.Group("/periodos")
 		// 	{

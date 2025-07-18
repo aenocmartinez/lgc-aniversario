@@ -17,10 +17,10 @@ CREATE TABLE formularios (
 	habeas_data 		BOOL DEFAULT true,
 	estado 				ENUM('Pendiente', 'Validado') DEFAULT 'Pendiente',
 	asistencia			ENUM('Virtual', 'Presencial') DEFAULT 'Presencial',
-	fecha_registro 		TIMESTAMP DEFAULT CURRENT_TIMESTAMP,	
+	fecha_registro 		TIMESTAMP DEFAULT CURRENT_TIMESTAMP	
 
 
-	UNIQUE(documento) 
+	-- UNIQUE(documento) 
 );
 
 

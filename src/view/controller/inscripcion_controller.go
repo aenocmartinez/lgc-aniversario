@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"lgc/src/infraestructure/di"
+	usecase "lgc/src/usecase/inscripcion"
 	formrequest "lgc/src/view/form-request"
 	"net/http"
 
@@ -17,5 +19,11 @@ func RealizarInscripcion(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Formulario de inscripción"})
+	realizarInscripcion := usecase.NewRealizarInscripcionUseCase(
+		di.GetContainer().GetInscripcionRepository(),
+	)
+
+	response := realizarInscripcion.Execute(req)
+
+	c.JSON(response.StatusCode, response)
 }

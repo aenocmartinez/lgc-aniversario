@@ -7,21 +7,34 @@ import (
 	formrequest "lgc/src/view/form-request"
 )
 
-type InscripcionUseCase struct {
+type RealizarInscripcionUseCase struct {
 	inscripcionRepo domain.InscripcionRepository
 }
 
-func NewInscripcionUseCase(inscripcionRepo domain.InscripcionRepository) *InscripcionUseCase {
-	return &InscripcionUseCase{
+func NewRealizarInscripcionUseCase(inscripcionRepo domain.InscripcionRepository) *RealizarInscripcionUseCase {
+	return &RealizarInscripcionUseCase{
 		inscripcionRepo: inscripcionRepo,
 	}
 }
 
-func (uc *InscripcionUseCase) Execute(req formrequest.InscripcionFormRequest) dto.APIResponse {
+func (uc *RealizarInscripcionUseCase) Execute(req formrequest.InscripcionFormRequest) dto.APIResponse {
 
 	inscripcion := uc.inscripcionRepo.BuscarPorDocumento(req.Documento)
-	if inscripcion.Existe() && inscripcion.EsValida() {
-		return dto.NewAPIResponse(200, fmt.Sprintf("El documento %s ya cuenta con una inscripción registrada para el evento.", req.Documento), inscripcion.ToDTO())
+	if inscripcion.Existe() {
+		if inscripcion.EsValida() {
+			return dto.NewAPIResponse(
+				200,
+				fmt.Sprintf("El documento %s ya tiene una inscripción validada. Su participación en el evento ha sido confirmada.", req.Documento),
+				inscripcion.ToDTO(),
+			)
+		} else {
+			return dto.NewAPIResponse(
+				200,
+				fmt.Sprintf("El documento %s ya cuenta con una inscripción registrada y se encuentra en proceso de validación.", req.Documento),
+				inscripcion.ToDTO(),
+			)
+		}
+
 	}
 
 	inscripcion.SetNombre(req.Nombre)
@@ -33,6 +46,7 @@ func (uc *InscripcionUseCase) Execute(req formrequest.InscripcionFormRequest) dt
 	inscripcion.SetAsistencia(req.Asistencia)
 	inscripcion.SetCiudad(req.Ciudad)
 	inscripcion.SetIglesia(req.Iglesia)
+	inscripcion.SetEstado("Pendiente")
 
 	exito := inscripcion.Crear()
 
