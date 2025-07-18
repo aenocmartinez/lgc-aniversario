@@ -29,7 +29,7 @@ func main() {
 	r.GET("/mutant", controller.Mutant)
 
 	// Formulario inscripcion
-	r.POST("/formulario-inscripcion", controller.CrearInscripcion)
+	r.POST("/formulario-inscripcion", controller.RealizarInscripcion)
 
 	protected := r.Group("/api")
 	protected.Use(middleware.AuthMiddleware())
