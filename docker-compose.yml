@@ -1,0 +1,16 @@
+version: "3.9"
+
+services:
+  redaccion:
+    platform: linux/x86_64
+    build: .
+    image: lgc-aniversario:dev
+    container_name: lgc-aniversario-container
+    volumes:
+      - .:/app
+    ports:
+      - 8586:8586
+    restart: always
+    env_file:
+      - ${HOME}/environments/lgc-aniversario-env/.env
+    command: ["/app/main"]
