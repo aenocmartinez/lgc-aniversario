@@ -60,14 +60,14 @@ func ListarInscripcionesAprobadas(c *gin.Context) {
 	c.JSON(response.StatusCode, response)
 }
 
-func AprobarInscripcion(c *gin.Context) {
+func AnularInscripcion(c *gin.Context) {
 	id, err := util.ConvertStringToID(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, dto.NewAPIResponse(http.StatusBadRequest, "ID inválido", nil))
 		return
 	}
 
-	validarInscripcion := usecase.NewValidarInscripcionUseCase(
+	validarInscripcion := usecase.NewAnularInscripcionUseCase(
 		di.GetContainer().GetInscripcionRepository(),
 	)
 

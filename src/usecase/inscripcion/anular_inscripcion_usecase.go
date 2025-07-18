@@ -5,17 +5,17 @@ import (
 	"lgc/src/view/dto"
 )
 
-type ValidarInscripcionUseCase struct {
+type AnularInscripcionUseCase struct {
 	inscripcionRepo domain.InscripcionRepository
 }
 
-func NewValidarInscripcionUseCase(inscripcionRepo domain.InscripcionRepository) *ValidarInscripcionUseCase {
-	return &ValidarInscripcionUseCase{
+func NewAnularInscripcionUseCase(inscripcionRepo domain.InscripcionRepository) *AnularInscripcionUseCase {
+	return &AnularInscripcionUseCase{
 		inscripcionRepo: inscripcionRepo,
 	}
 }
 
-func (uc *ValidarInscripcionUseCase) Execute(inscripcionID int64) dto.APIResponse {
+func (uc *AnularInscripcionUseCase) Execute(inscripcionID int64) dto.APIResponse {
 
 	inscripcion := uc.inscripcionRepo.BuscarPorID(inscripcionID)
 	if !inscripcion.Existe() {

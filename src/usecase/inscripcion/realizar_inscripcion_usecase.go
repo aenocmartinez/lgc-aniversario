@@ -21,14 +21,16 @@ func NewRealizarInscripcionUseCase(inscripcionRepo domain.InscripcionRepository)
 
 func (uc *RealizarInscripcionUseCase) Execute(req formrequest.InscripcionFormRequest) dto.APIResponse {
 
-	cupoMax, err := util.ConvertStringToInt(os.Getenv("APP_CUPO_MAX"))
-	if err != nil {
-		cupoMax = 400
-	}
+	if req.Asistencia == "Presencial" {
+		cupoMax, err := util.ConvertStringToInt(os.Getenv("APP_CUPO_MAX"))
+		if err != nil {
+			cupoMax = 400
+		}
 
-	totalInscripcionesPresenciales := uc.inscripcionRepo.TotalInscripcionesPresenciales()
-	if totalInscripcionesPresenciales > cupoMax {
-		return dto.NewAPIResponse(200, "El cupo disponible ha sido completado, por lo tanto, no es posible procesar nuevas inscripciones.", nil)
+		totalInscripcionesPresenciales := uc.inscripcionRepo.TotalInscripcionesPresenciales()
+		if totalInscripcionesPresenciales > cupoMax {
+			return dto.NewAPIResponse(200, "El cupo disponible ha sido completado, por lo tanto, no es posible procesar nuevas inscripciones.", nil)
+		}
 	}
 
 	inscripcion := uc.inscripcionRepo.BuscarPorDocumento(req.Documento)

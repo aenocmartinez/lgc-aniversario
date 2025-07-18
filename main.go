@@ -44,7 +44,7 @@ func main() {
 			inscripcionGroup.GET("", controller.ListarInscripciones)
 			inscripcionGroup.GET("/pendientes", controller.ListarInscripcionesPendientes)
 			inscripcionGroup.GET("/aprobadas", controller.ListarInscripcionesAprobadas)
-			inscripcionGroup.PUT("/aprobar/:id", controller.AprobarInscripcion)
+			inscripcionGroup.PUT("/anular/:id", controller.AnularInscripcion)
 		}
 	}
 
