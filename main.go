@@ -24,6 +24,9 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}))
 
+	// Login
+	r.POST("/login", controller.Login)
+
 	// Pruebas
 	r.GET("/check-db", controller.CheckDBConnection)
 	r.GET("/mutant", controller.Mutant)
@@ -36,70 +39,13 @@ func main() {
 	{
 		protected.POST("/logout", controller.Logout)
 
-		// cursoGroup := protected.Group("/inscripciones")
-		// {
-		// 	cursoGroup.GET("", controller.Lis)
-		// 	cursoGroup.POST("", controller.CrearCurso)
-		// 	cursoGroup.PUT("/:id", controller.ActualizarCurso)
-		// 	cursoGroup.DELETE("/:id", controller.EliminarCurso)
-		// }
-
-		// 	periodoGroup := protected.Group("/periodos")
-		// 	{
-		// 		periodoGroup.GET("", controller.ListarPeriodos)
-		// 		periodoGroup.POST("", controller.CrearPeriodo)
-		// 		periodoGroup.PUT("/:id", controller.ActualizarPeriodo)
-		// 		periodoGroup.DELETE("/:id", controller.EliminarPeriodo)
-		// 		periodoGroup.GET("/:id/cursos", controller.ListarCursosDePeriodo)
-		// 		periodoGroup.GET("/:id/cursos/:curso_id/alumnos", controller.ListarAlumnosMatriculados)
-		// 		periodoGroup.POST("/curso-periodo/:id/contenido-tematico", controller.AgregarContenidoTematico)
-		// 		periodoGroup.DELETE("/curso-periodo/:id/contenido-tematico/:contenido_tematico_id", controller.QuitarContenidoTematico)
-		// 		periodoGroup.GET("/curso-periodo/:id/contenido-tematico", controller.ObtenerContenidoTematicoDeUnCursoPeriodo)
-		// 	}
-
-		// 	alumnoGroup := protected.Group("/alumnos")
-		// 	{
-		// 		alumnoGroup.GET("", controller.ListarAlumnos)
-		// 		alumnoGroup.GET("/:id", controller.BuscarAlumnoPorId)
-		// 		alumnoGroup.POST("", controller.CrearAlumno)
-		// 		alumnoGroup.PUT("/:id", controller.ActualizarAlumno)
-		// 		alumnoGroup.DELETE("/:id", controller.EliminarAlumno)
-		// 		alumnoGroup.POST("/:id/matriculas", controller.MatricularAlumno)
-		// 		alumnoGroup.PUT("/:id/cambiar-estado", controller.CambiarEstadoAlumno)
-		// 	}
-
-		// 	maestroGroup := protected.Group("/maestros")
-		// 	{
-		// 		maestroGroup.GET("", controller.ListarMaestros)
-		// 		maestroGroup.GET("/:id", controller.BuscarMaestroPorId)
-		// 		maestroGroup.POST("", controller.CrearMaestro)
-		// 		maestroGroup.PUT("/:id", controller.ActualizarMaestro)
-		// 		maestroGroup.DELETE("/:id", controller.EliminarMaestro)
-		// 	}
-
-		// 	celebracionGroup := protected.Group("/celebraciones")
-		// 	{
-		// 		celebracionGroup.GET("", controller.ListarCelebraciones)
-		// 		celebracionGroup.POST("", controller.CrearCelebracion)
-		// 		celebracionGroup.PUT("/:id", controller.ActualizarCelebracion)
-		// 		celebracionGroup.DELETE("/:id", controller.EliminarCelebracion)
-		// 	}
-
-		// 	grupoGroup := protected.Group("/grupos")
-		// 	{
-		// 		grupoGroup.GET("", controller.ListarGrupos)
-		// 		// grupoGroup.POST("", controller.CrearGrupo)
-		// 		grupoGroup.POST("", controller.GuardarGrupo)
-		// 		// grupoGroup.PUT("/:id", controller.ActualizarGrupo)
-
-		// 		grupoGroup.DELETE("/:id", controller.EliminarGrupo)
-		// 	}
-
-		// 	claseGroup := protected.Group("/clases")
-		// 	{
-		// 		claseGroup.POST("/asistencia", controller.RegistrarAsistencia)
-		// 	}
-
+		inscripcionGroup := protected.Group("/inscripciones")
+		{
+			inscripcionGroup.GET("", controller.ListarInscripciones)
+			inscripcionGroup.GET("/pendientes", controller.ListarInscripcionesPendientes)
+			inscripcionGroup.GET("/aprobadas", controller.ListarInscripcionesAprobadas)
+			inscripcionGroup.PUT("/aprobar/:id", controller.AprobarInscripcion)
+		}
 	}
 
 	r.Run(":8586")

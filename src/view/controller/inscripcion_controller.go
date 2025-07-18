@@ -2,7 +2,9 @@ package controller
 
 import (
 	"lgc/src/infraestructure/di"
+	"lgc/src/infraestructure/util"
 	usecase "lgc/src/usecase/inscripcion"
+	"lgc/src/view/dto"
 	formrequest "lgc/src/view/form-request"
 	"net/http"
 
@@ -24,6 +26,52 @@ func RealizarInscripcion(c *gin.Context) {
 	)
 
 	response := realizarInscripcion.Execute(req)
+
+	c.JSON(response.StatusCode, response)
+}
+
+func ListarInscripciones(c *gin.Context) {
+	listarInscripciones := usecase.NewListarInscripcionesUseCase(
+		di.GetContainer().GetInscripcionRepository(),
+	)
+
+	response := listarInscripciones.Execute()
+
+	c.JSON(response.StatusCode, response)
+}
+
+func ListarInscripcionesPendientes(c *gin.Context) {
+	listarInscripciones := usecase.NewListarInscripcionesPendientesUseCase(
+		di.GetContainer().GetInscripcionRepository(),
+	)
+
+	response := listarInscripciones.Execute()
+
+	c.JSON(response.StatusCode, response)
+}
+
+func ListarInscripcionesAprobadas(c *gin.Context) {
+	listarInscripciones := usecase.NewListarInscripcionesAprobadasUseCase(
+		di.GetContainer().GetInscripcionRepository(),
+	)
+
+	response := listarInscripciones.Execute()
+
+	c.JSON(response.StatusCode, response)
+}
+
+func AprobarInscripcion(c *gin.Context) {
+	id, err := util.ConvertStringToID(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dto.NewAPIResponse(http.StatusBadRequest, "ID inválido", nil))
+		return
+	}
+
+	validarInscripcion := usecase.NewValidarInscripcionUseCase(
+		di.GetContainer().GetInscripcionRepository(),
+	)
+
+	response := validarInscripcion.Execute(id)
 
 	c.JSON(response.StatusCode, response)
 }

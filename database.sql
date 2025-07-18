@@ -15,12 +15,9 @@ CREATE TABLE formularios (
 	ciudad 				VARCHAR(100) DEFAULT '',
 	iglesia 			VARCHAR(255) DEFAULT '',
 	habeas_data 		BOOL DEFAULT true,
-	estado 				ENUM('Pendiente', 'Validado') DEFAULT 'Pendiente',
+	estado 				ENUM('Pendiente', 'Aprobada', 'Anulada') DEFAULT 'Pendiente',
 	asistencia			ENUM('Virtual', 'Presencial') DEFAULT 'Presencial',
 	fecha_registro 		TIMESTAMP DEFAULT CURRENT_TIMESTAMP	
-
-
-	-- UNIQUE(documento) 
 );
 
 

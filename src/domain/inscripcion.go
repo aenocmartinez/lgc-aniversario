@@ -132,6 +132,10 @@ func (f *Inscripcion) EsValida() bool {
 	return f.inscripcionRepo.InscripcionValidada(f.id)
 }
 
+func (f *Inscripcion) Aprobar() bool {
+	return f.inscripcionRepo.Validar(f.id, true)
+}
+
 func (f *Inscripcion) ToDTO() dto.InscripcionDTO {
 	return dto.InscripcionDTO{
 		ID:             f.id,

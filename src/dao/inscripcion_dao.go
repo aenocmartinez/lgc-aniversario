@@ -1,6 +1,7 @@
 package dao
 
 import (
+	"fmt"
 	"lgc/src/domain"
 	"lgc/src/infraestructure/database"
 	"log"
@@ -49,7 +50,8 @@ func toInscripcion(f formularioDB) *domain.Inscripcion {
 	ins.SetEstado(f.Estado)
 	ins.SetAsistencia(f.Asistencia)
 	ins.SetComprobantePago(f.ComprobantePago)
-	// ins.SetFechaRegistro(f.FechaRegistro)
+	fechaStr := f.FechaRegistro.Format("2006-01-02 15:04:05")
+	ins.SetFechaRegistro(fechaStr)
 	return ins
 }
 
@@ -93,7 +95,7 @@ func (i *InscripcionDao) BuscarPorDocumento(documento string) *domain.Inscripcio
 
 func (i *InscripcionDao) ListarInscripcionesPorEstado(estado string) []domain.Inscripcion {
 	var resultados []formularioDB
-	if err := i.db.Where("estado = ?", estado).Find(&resultados).Error; err != nil {
+	if err := i.db.Where("estado = ?", estado).Order("fecha_registro DESC").Find(&resultados).Error; err != nil {
 		return nil
 	}
 	var lista []domain.Inscripcion
@@ -106,7 +108,7 @@ func (i *InscripcionDao) ListarInscripcionesPorEstado(estado string) []domain.In
 
 func (i *InscripcionDao) Listar() []domain.Inscripcion {
 	var resultados []formularioDB
-	if err := i.db.Find(&resultados).Error; err != nil {
+	if err := i.db.Find(&resultados).Order("fecha_registro DESC").Error; err != nil {
 		return nil
 	}
 	var lista []domain.Inscripcion
@@ -120,16 +122,18 @@ func (i *InscripcionDao) Listar() []domain.Inscripcion {
 func (i *InscripcionDao) InscripcionValidada(inscripcionID int64) bool {
 	var estado string
 	err := i.db.Table("formularios").Select("estado").Where("id = ?", inscripcionID).Scan(&estado).Error
-	return err == nil && estado == "Validado"
+	return err == nil && estado == "Aprobada"
 }
 
 func (i *InscripcionDao) Validar(inscripcionID int64, validado bool) bool {
 	nuevoEstado := "Pendiente"
 	if validado {
-		nuevoEstado = "Validado"
+		nuevoEstado = "Aprobada"
 	}
 	result := i.db.Model(&formularioDB{}).
 		Where("id = ?", inscripcionID).
 		Update("estado", nuevoEstado)
+
+	fmt.Println(result.Error)
 	return result.Error == nil && result.RowsAffected > 0
 }
