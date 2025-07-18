@@ -38,6 +38,6 @@ func CheckDBConnection(c *gin.Context) {
 func Mutant(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"status":  "success",
-		"message": "Version 1.0.0 - Mutant endpoint",
+		"message": "Version 1.0.0",
 	})
 }

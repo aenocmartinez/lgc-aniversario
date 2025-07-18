@@ -1,50 +1,46 @@
 #!/bin/bash
 
-set -e  # Detiene la ejecución si hay errores
+set -e
 
-CONTAINER_NAME="lgcebd-container"
+CONTAINER_NAME="lgc-aniversario-container"
 
-# Función para compilar correctamente en la máquina host
 compile() {
     echo "🔄 Compilando código Go para Linux..."
-    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -tags netgo -ldflags="-s -w -extldflags '-static'" -o main .
+    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+    go build -tags netgo -ldflags="-s -w -extldflags '-static'" -o main .
 }
 
-# 🔄 Función para limpiar logs del contenedor
-clear_logs() {
-    echo "🧹 Limpiando logs del contenedor..."
-    docker stop $CONTAINER_NAME >/dev/null 2>&1 || true
-    docker rm $CONTAINER_NAME >/dev/null 2>&1 || true
+# 💥 Forzar eliminación del contenedor y su log
+remove_container_and_logs() {
+    if docker inspect $CONTAINER_NAME >/dev/null 2>&1; then
+        echo "🧹 Eliminando contenedor para limpiar logs..."
+        docker stop $CONTAINER_NAME >/dev/null 2>&1 || true
+        docker rm $CONTAINER_NAME >/dev/null 2>&1 || true
+    fi
+}
+
+# 🆙 Levanta el contenedor sin reconstruir imagen
+start_container() {
+    echo "🚀 Levantando contenedor..."
     docker compose up -d
 }
 
-# Función para reiniciar el contenedor sin reconstruir la imagen
-restart_container() {
-    echo "♻️ Reiniciando contenedor..."
-    docker stop $CONTAINER_NAME >/dev/null 2>&1 || true
-
-    # 🔄 Limpiar logs del contenedor correctamente
-    echo "🧹 Reiniciando logs del contenedor..."
-    docker logs --tail 0 $CONTAINER_NAME >/dev/null 2>&1 || true
-    truncate -s 0 $(docker inspect --format='{{.LogPath}}' $CONTAINER_NAME) 2>/dev/null || true
-
-    docker start $CONTAINER_NAME || docker compose up -d
-    echo "✅ Contenedor en ejecución."
-}
-
-# Verifica si se debe compilar o construir
+# 🚀 Flujo principal
 case "$1" in
     --compile)
         compile
-        clear_logs
+        remove_container_and_logs
+        start_container
         ;;
     --build)
-        echo "🔨 Construyendo imagen y reiniciando..."
-        compile  # Asegurar que el binario sea correcto antes de reconstruir
+        echo "🔨 Reconstruyendo imagen..."
+        compile
         docker compose down
         docker compose up -d --build
         ;;
     *)
-        restart_container
+        echo "♻️ Reiniciando contenedor..."
+        docker stop $CONTAINER_NAME >/dev/null 2>&1 || true
+        docker start $CONTAINER_NAME || docker compose up -d
         ;;
 esac

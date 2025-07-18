@@ -24,9 +24,12 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}))
 
-	// r.POST("/login", controller.Login)
+	// Pruebas
 	r.GET("/check-db", controller.CheckDBConnection)
 	r.GET("/mutant", controller.Mutant)
+
+	// Formulario inscripcion
+	r.POST("/formulario-inscripcion", controller.CrearInscripcion)
 
 	protected := r.Group("/api")
 	protected.Use(middleware.AuthMiddleware())
