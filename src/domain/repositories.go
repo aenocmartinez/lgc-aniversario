@@ -18,4 +18,5 @@ type InscripcionRepository interface {
 	InscripcionAprobada(inscripcionID int64) bool
 	Aprobar(inscripcionID int64) bool
 	Anular(inscripcionID int64) bool
+	CrearConValidacionDeCupo(inscripcion *Inscripcion, cupoMax int) (bool, error)
 }

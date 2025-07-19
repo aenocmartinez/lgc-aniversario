@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"lgc/src/domain"
 	"lgc/src/infraestructure/database"
-	"log"
 	"time"
 
 	"gorm.io/gorm"
@@ -73,7 +72,7 @@ func (i *InscripcionDao) Crear(inscripcion *domain.Inscripcion) bool {
 		inscripcion.SetID(data.ID)
 		return true
 	}
-	log.Println(result.Error)
+
 	return false
 }
 
@@ -87,7 +86,7 @@ func (i *InscripcionDao) BuscarPorID(inscripcionID int64) *domain.Inscripcion {
 
 func (i *InscripcionDao) BuscarPorDocumento(documento string) *domain.Inscripcion {
 	var f formularioDB
-	if err := i.db.Where("documento = ?", documento).First(&f).Error; err != nil {
+	if err := i.db.Where("documento = ? AND estado != 'Anulada'", documento).First(&f).Error; err != nil {
 		return toInscripcion(f)
 	}
 	return toInscripcion(f)
@@ -156,4 +155,45 @@ func (i *InscripcionDao) TotalInscripcionesPresenciales() int {
 		return 0
 	}
 	return int(total) + 1
+}
+
+func (i *InscripcionDao) CrearConValidacionDeCupo(inscripcion *domain.Inscripcion, cupoMax int) (bool, error) {
+	err := i.db.Transaction(func(tx *gorm.DB) error {
+		var total int64
+		if err := tx.Model(&formularioDB{}).
+			Where("asistencia = 'Presencial' AND estado != 'Anulada'").
+			Count(&total).Error; err != nil {
+			return err
+		}
+
+		if total >= int64(cupoMax) {
+			return fmt.Errorf("cupo lleno")
+		}
+
+		data := formularioDB{
+			Nombre:          inscripcion.GetNombre(),
+			Documento:       inscripcion.GetDocumento(),
+			Email:           inscripcion.GetEmail(),
+			Telefono:        inscripcion.GetTelefono(),
+			Ciudad:          inscripcion.GetCiudad(),
+			Iglesia:         inscripcion.GetIglesia(),
+			HabeasData:      inscripcion.GetHabeasData(),
+			Estado:          inscripcion.GetEstado(),
+			Asistencia:      inscripcion.GetAsistencia(),
+			ComprobantePago: inscripcion.GetComprobantePago(),
+		}
+
+		if err := tx.Create(&data).Error; err != nil {
+			return err
+		}
+
+		inscripcion.SetID(data.ID)
+		return nil
+	})
+
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }

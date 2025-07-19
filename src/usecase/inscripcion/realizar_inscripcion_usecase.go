@@ -20,22 +20,8 @@ func NewRealizarInscripcionUseCase(inscripcionRepo domain.InscripcionRepository)
 }
 
 func (uc *RealizarInscripcionUseCase) Execute(req formrequest.InscripcionFormRequest) dto.APIResponse {
-
-	if req.Asistencia == "Presencial" {
-		cupoMax, err := util.ConvertStringToInt(os.Getenv("APP_CUPO_MAX"))
-		if err != nil {
-			cupoMax = 400
-		}
-
-		totalInscripcionesPresenciales := uc.inscripcionRepo.TotalInscripcionesPresenciales()
-		if totalInscripcionesPresenciales > cupoMax {
-			return dto.NewAPIResponse(200, "El cupo disponible ha sido completado, por lo tanto, no es posible procesar nuevas inscripciones.", nil)
-		}
-	}
-
 	inscripcion := uc.inscripcionRepo.BuscarPorDocumento(req.Documento)
 	if inscripcion.Existe() {
-
 		if inscripcion.EstaAprobada() {
 			return dto.NewAPIResponse(
 				200,
@@ -64,11 +50,30 @@ func (uc *RealizarInscripcionUseCase) Execute(req formrequest.InscripcionFormReq
 	inscripcion.SetIglesia(req.Iglesia)
 	inscripcion.SetEstado("PreAprobada")
 
-	exito := inscripcion.Crear()
+	if req.Asistencia == "Presencial" {
+		cupoMax, err := util.ConvertStringToInt(os.Getenv("APP_CUPO_MAX"))
+		if err != nil {
+			cupoMax = 400
+		}
 
-	if !exito {
+		ok, err := uc.inscripcionRepo.CrearConValidacionDeCupo(inscripcion, cupoMax)
+		if err != nil {
+			if err.Error() == "cupo lleno" {
+				return dto.NewAPIResponse(200, "El cupo disponible ha sido completado, por lo tanto, no es posible procesar nuevas inscripciones.", nil)
+			}
+			return dto.NewAPIResponse(500, "Ha ocurrido un error al registrar la inscripción. Por favor, inténtelo de nuevo.", nil)
+		}
+
+		if ok {
+			return dto.NewAPIResponse(201, "La inscripción ha sido registrada exitosamente y el comprobante de pago ha sido recibido. Agradecemos su participación en el evento.", nil)
+		}
+	} else {
+
+		if uc.inscripcionRepo.Crear(inscripcion) {
+			return dto.NewAPIResponse(201, "La inscripción ha sido registrada exitosamente y el comprobante de pago ha sido recibido. Agradecemos su participación en el evento.", nil)
+		}
 		return dto.NewAPIResponse(500, "Ha ocurrido un error interno en el sistema. Por favor, intenta nuevamente más tarde.", nil)
 	}
 
-	return dto.NewAPIResponse(201, "La inscripción ha sido registrada exitosamente y el comprobante de pago ha sido recibido. Agradecemos su participación en el evento.", nil)
+	return dto.NewAPIResponse(500, "No fue posible completar la inscripción. Inténtelo más tarde.", nil)
 }
