@@ -30,6 +30,25 @@ func RealizarInscripcion(c *gin.Context) {
 	c.JSON(response.StatusCode, response)
 }
 
+func RealizarInscripcionPagoEfectivo(c *gin.Context) {
+
+	var req formrequest.InscripcionPagoEfectivoFormRequest
+
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		return
+	}
+
+	realizarInscripcion := usecase.NewRealizarInscripcionPagoEnEfectivoUseCase(
+		di.GetContainer().GetInscripcionRepository(),
+	)
+
+	response := realizarInscripcion.Execute(req)
+
+	c.JSON(response.StatusCode, response)
+}
+
 func ListarInscripciones(c *gin.Context) {
 	listarInscripciones := usecase.NewListarInscripcionesUseCase(
 		di.GetContainer().GetInscripcionRepository(),

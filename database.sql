@@ -35,3 +35,5 @@ CREATE TABLE usuarios (
 
 
 INSERT INTO usuarios (nombre, email, password) VALUES ('Abimelec Enoc Martinez Robles', 'aenoc.martinez@gmail.com', '$2a$10$DGU1xtIJgFcsnsGSWY.7Ren2jPar1lE7Hlgoe7scnMlNbV1UFeCne');
+
+ALTER TABLE formularios ADD COLUMN medio_pago ENUM('Transferencia', 'Efectivo') DEFAULT 'Transferencia' AFTER habeas_data;

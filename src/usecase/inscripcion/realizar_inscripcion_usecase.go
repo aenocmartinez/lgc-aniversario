@@ -49,6 +49,7 @@ func (uc *RealizarInscripcionUseCase) Execute(req formrequest.InscripcionFormReq
 	inscripcion.SetCiudad(req.Ciudad)
 	inscripcion.SetIglesia(req.Iglesia)
 	inscripcion.SetEstado("PreAprobada")
+	inscripcion.SetMedioPago("Transferencia")
 
 	if req.Asistencia == "Presencial" {
 		cupoMax, err := util.ConvertStringToInt(os.Getenv("APP_CUPO_MAX"))

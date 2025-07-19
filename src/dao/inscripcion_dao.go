@@ -26,6 +26,7 @@ type formularioDB struct {
 	Ciudad          string    `gorm:"column:ciudad"`
 	Iglesia         string    `gorm:"column:iglesia"`
 	HabeasData      bool      `gorm:"column:habeas_data"`
+	MedioPago       string    `gorm:"column:medio_pago"`
 	Estado          string    `gorm:"column:estado"`
 	Asistencia      string    `gorm:"column:asistencia"`
 	ComprobantePago string    `gorm:"column:comprobante_pago"`
@@ -63,6 +64,7 @@ func (i *InscripcionDao) Crear(inscripcion *domain.Inscripcion) bool {
 		Ciudad:          inscripcion.GetCiudad(),
 		Iglesia:         inscripcion.GetIglesia(),
 		HabeasData:      inscripcion.GetHabeasData(),
+		MedioPago:       inscripcion.GetMedioPago(),
 		Estado:          inscripcion.GetEstado(),
 		Asistencia:      inscripcion.GetAsistencia(),
 		ComprobantePago: inscripcion.GetComprobantePago(),
@@ -177,6 +179,7 @@ func (i *InscripcionDao) CrearConValidacionDeCupo(inscripcion *domain.Inscripcio
 			Telefono:        inscripcion.GetTelefono(),
 			Ciudad:          inscripcion.GetCiudad(),
 			Iglesia:         inscripcion.GetIglesia(),
+			MedioPago:       inscripcion.GetMedioPago(),
 			HabeasData:      inscripcion.GetHabeasData(),
 			Estado:          inscripcion.GetEstado(),
 			Asistencia:      inscripcion.GetAsistencia(),

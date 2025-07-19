@@ -47,6 +47,7 @@ func main() {
 			inscripcionGroup.GET("/aprobadas", controller.ListarInscripcionesAprobadas)
 			inscripcionGroup.PUT("/anular/:id", controller.AnularInscripcion)
 			inscripcionGroup.PUT("/aprobar/:id", controller.AprobarInscripcion)
+			inscripcionGroup.POST("/pago-efectivo", controller.RealizarInscripcionPagoEfectivo)
 		}
 
 		estadisticaGroup := protected.Group("/estadisticas")

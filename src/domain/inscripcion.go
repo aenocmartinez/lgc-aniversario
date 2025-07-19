@@ -11,6 +11,7 @@ type Inscripcion struct {
 	ciudad          string
 	iglesia         string
 	habeasData      bool
+	medioPago       string
 	estado          string
 	asistencia      string
 	comprobatePago  string
@@ -78,6 +79,14 @@ func (f *Inscripcion) SetIglesia(iglesia string) {
 
 func (f *Inscripcion) GetIglesia() string {
 	return f.iglesia
+}
+
+func (f *Inscripcion) SetMedioPago(medioPago string) {
+	f.medioPago = medioPago
+}
+
+func (f *Inscripcion) GetMedioPago() string {
+	return f.medioPago
 }
 
 func (f *Inscripcion) SetHabeasData(habeasData bool) {
@@ -156,6 +165,7 @@ func (f *Inscripcion) ToDTO() dto.InscripcionDTO {
 		Email:          f.email,
 		Ciudad:         f.ciudad,
 		Iglesia:        f.iglesia,
+		MedioPago:      f.medioPago,
 		HabeasData:     f.habeasData,
 		Estado:         f.estado,
 		ComprobatePago: f.comprobatePago,

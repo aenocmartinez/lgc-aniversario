@@ -9,6 +9,7 @@ type InscripcionDTO struct {
 	Ciudad         string `json:"ciudad,omitempty"`
 	Iglesia        string `json:"iglesia,omitempty"`
 	HabeasData     bool   `json:"habeas_data"`
+	MedioPago      string `json:"medio_pago"`
 	Estado         string `json:"estado"`
 	Revisada       bool   `json:"revisada"`
 	Asistencia     string `json:"asistencia"`
