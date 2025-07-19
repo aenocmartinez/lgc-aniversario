@@ -48,6 +48,11 @@ func main() {
 			inscripcionGroup.PUT("/anular/:id", controller.AnularInscripcion)
 			inscripcionGroup.PUT("/aprobar/:id", controller.AprobarInscripcion)
 		}
+
+		estadisticaGroup := protected.Group("/estadisticas")
+		{
+			estadisticaGroup.GET("/resumen", controller.ObtenerResumenEstadisticas)
+		}
 	}
 
 	r.Run(":8586")

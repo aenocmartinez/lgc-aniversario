@@ -10,9 +10,10 @@ import (
 )
 
 type Container struct {
-	db              *gorm.DB
-	userRepo        domain.UserRepository
-	inscripcionRepo domain.InscripcionRepository
+	db               *gorm.DB
+	userRepo         domain.UserRepository
+	inscripcionRepo  domain.InscripcionRepository
+	estadisticasRepo domain.EstadisticasRepository
 }
 
 var (
@@ -24,9 +25,10 @@ func GetContainer() *Container {
 	once.Do(func() {
 		db := database.GetDB()
 		instance = &Container{
-			db:              db,
-			userRepo:        dao.NewUserDao(db),
-			inscripcionRepo: dao.NewInscripcionDao(db),
+			db:               db,
+			userRepo:         dao.NewUserDao(db),
+			inscripcionRepo:  dao.NewInscripcionDao(db),
+			estadisticasRepo: dao.NewEstadisticasDao(db),
 		}
 	})
 	return instance
@@ -38,4 +40,8 @@ func (c *Container) GetUserRepository() domain.UserRepository {
 
 func (c *Container) GetInscripcionRepository() domain.InscripcionRepository {
 	return c.inscripcionRepo
+}
+
+func (c *Container) GetEstadisticasRepository() domain.EstadisticasRepository {
+	return c.estadisticasRepo
 }

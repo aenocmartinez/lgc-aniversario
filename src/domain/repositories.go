@@ -1,5 +1,7 @@
 package domain
 
+import "lgc/src/view/dto"
+
 type UserRepository interface {
 	FindByID(id int64) (*User, error)
 	FindByEmail(email string) (*User, error)
@@ -19,4 +21,8 @@ type InscripcionRepository interface {
 	Aprobar(inscripcionID int64) bool
 	Anular(inscripcionID int64) bool
 	CrearConValidacionDeCupo(inscripcion *Inscripcion, cupoMax int) (bool, error)
+}
+
+type EstadisticasRepository interface {
+	ObtenerResumenEstadisticas(cupoMax int) dto.EstadisticaResumenDTO
 }
