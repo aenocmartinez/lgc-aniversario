@@ -108,7 +108,7 @@ func (i *InscripcionDao) ListarInscripcionesPorEstado(estado string) []domain.In
 
 func (i *InscripcionDao) Listar() []domain.Inscripcion {
 	var resultados []formularioDB
-	if err := i.db.Find(&resultados).Order("fecha_registro DESC").Error; err != nil {
+	if err := i.db.Order("fecha_registro DESC").Find(&resultados).Error; err != nil {
 		return nil
 	}
 	var lista []domain.Inscripcion
@@ -125,14 +125,21 @@ func (i *InscripcionDao) InscripcionAprobada(inscripcionID int64) bool {
 	return err == nil && estado == "Aprobada"
 }
 
-func (i *InscripcionDao) Aprobar(inscripcionID int64, validado bool) bool {
-	nuevoEstado := "PreAprobada"
-	if validado {
-		nuevoEstado = "Aprobada"
-	}
+func (i *InscripcionDao) Aprobar(inscripcionID int64) bool {
+
 	result := i.db.Model(&formularioDB{}).
 		Where("id = ?", inscripcionID).
-		Update("estado", nuevoEstado)
+		Update("estado", "Aprobada")
+
+	fmt.Println(result.Error)
+	return result.Error == nil && result.RowsAffected > 0
+}
+
+func (i *InscripcionDao) Anular(inscripcionID int64) bool {
+
+	result := i.db.Model(&formularioDB{}).
+		Where("id = ?", inscripcionID).
+		Update("estado", "Anulada")
 
 	fmt.Println(result.Error)
 	return result.Error == nil && result.RowsAffected > 0

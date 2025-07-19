@@ -22,15 +22,15 @@ func (uc *AnularInscripcionUseCase) Execute(inscripcionID int64) dto.APIResponse
 		return dto.NewAPIResponse(404, "Inscripción no encontrada", nil)
 	}
 
-	if inscripcion.EstaAprobada() {
-		return dto.NewAPIResponse(200, "La inscripción ya ha sido aprobada.", nil)
+	if inscripcion.EstaAnulada() {
+		return dto.NewAPIResponse(200, "La inscripción ya ha sido anulada.", nil)
 	}
 
-	exito := inscripcion.Aprobar()
+	exito := inscripcion.Anular()
 
 	if !exito {
 		return dto.NewAPIResponse(500, "Ha ocurrido un error interno en el sistema. Por favor, intenta nuevamente más tarde.", nil)
 	}
 
-	return dto.NewAPIResponse(200, "Inscripción ha sido validada exitosamente", nil)
+	return dto.NewAPIResponse(200, "Inscripción ha sido anulada exitosamente", nil)
 }

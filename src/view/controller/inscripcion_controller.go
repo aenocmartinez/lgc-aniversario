@@ -67,11 +67,27 @@ func AnularInscripcion(c *gin.Context) {
 		return
 	}
 
-	validarInscripcion := usecase.NewAnularInscripcionUseCase(
+	anularInscripcion := usecase.NewAnularInscripcionUseCase(
 		di.GetContainer().GetInscripcionRepository(),
 	)
 
-	response := validarInscripcion.Execute(id)
+	response := anularInscripcion.Execute(id)
+
+	c.JSON(response.StatusCode, response)
+}
+
+func AprobarInscripcion(c *gin.Context) {
+	id, err := util.ConvertStringToID(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dto.NewAPIResponse(http.StatusBadRequest, "ID inválido", nil))
+		return
+	}
+
+	aprobarInscripcion := usecase.NewAprobarInscripcionUseCase(
+		di.GetContainer().GetInscripcionRepository(),
+	)
+
+	response := aprobarInscripcion.Execute(id)
 
 	c.JSON(response.StatusCode, response)
 }

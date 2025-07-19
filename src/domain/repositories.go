@@ -16,5 +16,6 @@ type InscripcionRepository interface {
 	TotalInscripcionesPresenciales() int
 	Listar() []Inscripcion
 	InscripcionAprobada(inscripcionID int64) bool
-	Aprobar(inscripcionID int64, validado bool) bool
+	Aprobar(inscripcionID int64) bool
+	Anular(inscripcionID int64) bool
 }

@@ -136,8 +136,16 @@ func (f *Inscripcion) EstaPreAprobada() bool {
 	return f.estado == "PreAprobada"
 }
 
+func (f *Inscripcion) EstaAnulada() bool {
+	return f.estado == "Anulada"
+}
+
 func (f *Inscripcion) Aprobar() bool {
-	return f.inscripcionRepo.Aprobar(f.id, true)
+	return f.inscripcionRepo.Aprobar(f.id)
+}
+
+func (f *Inscripcion) Anular() bool {
+	return f.inscripcionRepo.Anular(f.id)
 }
 
 func (f *Inscripcion) ToDTO() dto.InscripcionDTO {

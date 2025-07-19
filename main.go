@@ -33,6 +33,7 @@ func main() {
 
 	// Formulario inscripcion
 	r.POST("/realizar-inscripcion", controller.RealizarInscripcion)
+	r.POST("/cargar-soporte-pago", controller.CargarArchivoDePago)
 
 	protected := r.Group("/api")
 	protected.Use(middleware.AuthMiddleware())
@@ -45,6 +46,7 @@ func main() {
 			inscripcionGroup.GET("/pendientes", controller.ListarInscripcionesPendientes)
 			inscripcionGroup.GET("/aprobadas", controller.ListarInscripcionesAprobadas)
 			inscripcionGroup.PUT("/anular/:id", controller.AnularInscripcion)
+			inscripcionGroup.PUT("/aprobar/:id", controller.AprobarInscripcion)
 		}
 	}
 
