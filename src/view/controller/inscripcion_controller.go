@@ -28,6 +28,13 @@ func RealizarInscripcion(c *gin.Context) {
 	c.JSON(response.StatusCode, response)
 }
 
+func ConsultarCuposDisponibles(c *gin.Context) {
+	consultarCupos := usecase.NewConsultarCuposDisponiblesUseCase(di.GetContainer().GetInscripcionRepository())
+	response := consultarCupos.Execute()
+
+	c.JSON(response.StatusCode, response)
+}
+
 // func RealizarInscripcionPagoEfectivo(c *gin.Context) {
 
 // 	var req formrequest.InscripcionPagoEfectivoFormRequest

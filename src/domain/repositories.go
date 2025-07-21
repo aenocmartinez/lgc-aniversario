@@ -12,12 +12,14 @@ type UserRepository interface {
 
 type InscripcionRepository interface {
 	Crear(inscripcion *Inscripcion) bool
+	CrearConValidacionDeCupo(inscripcion *Inscripcion, participantes []Participante, cupoMax int) error
 	Listar() []Inscripcion
 	BuscarPorID(inscripcionID int64) Inscripcion
 	AgregarParticipante(inscripcionID int64, participante Participante) bool
 	ObtenerParticipantes(inscripcionID int64) []Participante
 	Aprobar(inscripcionID int64) bool
 	Rechazar(inscripcionID int64) bool
+	CuposDisponibles(cupoMax int) (ocupados int, disponibles int)
 }
 
 type ParticipanteRepository interface {

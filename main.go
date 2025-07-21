@@ -34,6 +34,7 @@ func main() {
 	// Formulario inscripcion
 	r.POST("/realizar-inscripcion", controller.RealizarInscripcion)
 	r.POST("/cargar-soporte-pago", controller.CargarArchivoDePago)
+	r.GET("/cupos-disponibles", controller.ConsultarCuposDisponibles)
 
 	protected := r.Group("/api")
 	protected.Use(middleware.AuthMiddleware())

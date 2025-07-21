@@ -1,6 +1,7 @@
 package dao
 
 import (
+	"fmt"
 	"lgc/src/domain"
 	"log"
 	"time"
@@ -49,6 +50,70 @@ func (i *InscripcionDao) Crear(inscripcion *domain.Inscripcion) bool {
 	inscripcion.SetEstado(model.Estado)
 
 	return true
+}
+
+func (dao *InscripcionDao) CrearConValidacionDeCupo(
+	inscripcion *domain.Inscripcion,
+	participantes []domain.Participante,
+	cupoMax int,
+) error {
+	return dao.db.Transaction(func(tx *gorm.DB) error {
+		var ocupados int64
+		tx.Raw(`
+			SELECT COUNT(*)
+			FROM participantes p
+			INNER JOIN inscripciones i ON i.id = p.inscripcion_id
+			WHERE p.modalidad = 'presencial' AND i.estado != 'Rechazada'
+			FOR UPDATE
+		`).Scan(&ocupados)
+
+		var solicitados int
+		for _, p := range participantes {
+			if p.GetModalidad() == "presencial" {
+				solicitados++
+			}
+		}
+
+		if int(ocupados)+solicitados > cupoMax {
+			return fmt.Errorf("cupo lleno")
+		}
+
+		model := inscripcionModel{
+			FormaPago:      inscripcion.GetFormaPago(),
+			MontoPagoCOP:   inscripcion.GetMontoPagoCOP(),
+			MontoPagoUSD:   inscripcion.GetMontoPagoUSD(),
+			UrlSoportePago: inscripcion.GetUrlSoportePago(),
+			Estado:         inscripcion.GetEstado(),
+		}
+
+		if err := tx.Create(&model).Error; err != nil {
+			return err
+		}
+		inscripcion.SetID(model.ID)
+
+		for _, p := range participantes {
+			if err := tx.Exec(`
+				INSERT INTO participantes (
+					inscripcion_id, nombre_completo, numero_documento, correo_electronico,
+					telefono, modalidad, dias_asistencia, iglesia, ciudad, autorizacion_datos
+				) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+				model.ID,
+				p.GetNombre(),
+				p.GetDocumento(),
+				p.GetEmail(),
+				p.GetTelefono(),
+				p.GetModalidad(),
+				p.GetDiasAsistencia(),
+				p.GetIglesia(),
+				p.GetCiudad(),
+				p.GetHabeasData(),
+			).Error; err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
 }
 
 func (i *InscripcionDao) Listar() []domain.Inscripcion {
@@ -165,4 +230,16 @@ func (i *InscripcionDao) Rechazar(inscripcionID int64) bool {
 		Update("estado", "Rechazada")
 
 	return result.Error == nil && result.RowsAffected > 0
+}
+
+func (dao *InscripcionDao) CuposDisponibles(cupoMax int) (int, int) {
+	var ocupados int64
+
+	dao.db.Raw(`
+		SELECT COUNT(*) FROM participantes p
+		INNER JOIN inscripciones i ON i.id = p.inscripcion_id
+		WHERE p.modalidad = 'presencial' AND i.estado != 'Rechazada'
+	`).Scan(&ocupados)
+
+	return int(ocupados), cupoMax - int(ocupados)
 }
