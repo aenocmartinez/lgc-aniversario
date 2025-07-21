@@ -12,15 +12,17 @@ type UserRepository interface {
 
 type InscripcionRepository interface {
 	Crear(inscripcion *Inscripcion) bool
-	BuscarPorID(inscripcionID int64) *Inscripcion
-	BuscarPorDocumento(documento string) *Inscripcion
-	ListarInscripcionesPorEstado(estado string) []Inscripcion
-	TotalInscripcionesPresenciales() int
 	Listar() []Inscripcion
-	InscripcionAprobada(inscripcionID int64) bool
+	BuscarPorID(inscripcionID int64) Inscripcion
+	AgregarParticipante(inscripcionID int64, participante Participante) bool
+	ObtenerParticipantes(inscripcionID int64) []Participante
 	Aprobar(inscripcionID int64) bool
-	Anular(inscripcionID int64) bool
-	CrearConValidacionDeCupo(inscripcion *Inscripcion, cupoMax int) (bool, error)
+	Rechazar(inscripcionID int64) bool
+}
+
+type ParticipanteRepository interface {
+	CrearParticipante(participante Participante) bool
+	BuscarPartipante(participanteID int64) Participante
 }
 
 type EstadisticasRepository interface {

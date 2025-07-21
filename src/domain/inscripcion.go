@@ -4,18 +4,12 @@ import "lgc/src/view/dto"
 
 type Inscripcion struct {
 	id              int64
-	nombre          string
-	documento       string
-	email           string
-	telefono        string
-	ciudad          string
-	iglesia         string
-	habeasData      bool
-	medioPago       string
+	formaPago       string
+	montoPagoCOP    int
+	montoPagoUSD    int
+	urlSoportePago  string
+	fechaCreacion   string
 	estado          string
-	asistencia      string
-	comprobatePago  string
-	fechaRegistro   string
 	inscripcionRepo InscripcionRepository
 }
 
@@ -25,152 +19,106 @@ func NewInscripcion(InscripcionRepo InscripcionRepository) *Inscripcion {
 	}
 }
 
-func (f *Inscripcion) SetID(id int64) {
-	f.id = id
+func (i *Inscripcion) SetID(id int64) {
+	i.id = id
 }
 
-func (f *Inscripcion) GetID() int64 {
-	return f.id
+func (i *Inscripcion) GetID() int64 {
+	return i.id
 }
 
-func (f *Inscripcion) SetNombre(nombre string) {
-	f.nombre = nombre
+func (i *Inscripcion) SetFormaPago(formaPago string) {
+	i.formaPago = formaPago
 }
 
-func (f *Inscripcion) GetNombre() string {
-	return f.nombre
+func (i *Inscripcion) GetFormaPago() string {
+	return i.formaPago
 }
 
-func (f *Inscripcion) SetDocumento(documento string) {
-	f.documento = documento
+func (i *Inscripcion) SetMontoPagoCOP(montoPagoCOP int) {
+	i.montoPagoCOP = montoPagoCOP
 }
 
-func (f *Inscripcion) GetDocumento() string {
-	return f.documento
+func (i *Inscripcion) GetMontoPagoCOP() int {
+	return i.montoPagoCOP
 }
 
-func (f *Inscripcion) SetEmail(email string) {
-	f.email = email
+func (i *Inscripcion) SetMontoPagoUSD(montoPagoUSD int) {
+	i.montoPagoUSD = montoPagoUSD
 }
 
-func (f *Inscripcion) GetEmail() string {
-	return f.email
+func (i *Inscripcion) GetMontoPagoUSD() int {
+	return i.montoPagoUSD
 }
 
-func (f *Inscripcion) SetTelefono(telefono string) {
-	f.telefono = telefono
+func (i *Inscripcion) SetUrlSoportePago(urlSoportePago string) {
+	i.urlSoportePago = urlSoportePago
 }
 
-func (f *Inscripcion) GetTelefono() string {
-	return f.telefono
+func (i *Inscripcion) GetUrlSoportePago() string {
+	return i.urlSoportePago
 }
 
-func (f *Inscripcion) SetCiudad(ciudad string) {
-	f.ciudad = ciudad
+func (i *Inscripcion) SetEstado(estado string) {
+	i.estado = estado
 }
 
-func (f *Inscripcion) GetCiudad() string {
-	return f.ciudad
+func (i *Inscripcion) GetEstado() string {
+	return i.estado
 }
 
-func (f *Inscripcion) SetIglesia(iglesia string) {
-	f.iglesia = iglesia
+func (i *Inscripcion) SetFechaCreacion(fechaCreacion string) {
+	i.fechaCreacion = fechaCreacion
 }
 
-func (f *Inscripcion) GetIglesia() string {
-	return f.iglesia
+func (i *Inscripcion) GetFechaCreacion() string {
+	return i.fechaCreacion
 }
 
-func (f *Inscripcion) SetMedioPago(medioPago string) {
-	f.medioPago = medioPago
+func (i *Inscripcion) AgregarParticipante(participante Participante) bool {
+	return i.inscripcionRepo.AgregarParticipante(i.id, participante)
 }
 
-func (f *Inscripcion) GetMedioPago() string {
-	return f.medioPago
+func (i *Inscripcion) Participantes() []Participante {
+	return i.inscripcionRepo.ObtenerParticipantes(i.id)
 }
 
-func (f *Inscripcion) SetHabeasData(habeasData bool) {
-	f.habeasData = habeasData
+func (i *Inscripcion) Crear() bool {
+	return i.inscripcionRepo.Crear(i)
 }
 
-func (f *Inscripcion) GetHabeasData() bool {
-	return f.habeasData
+func (i *Inscripcion) Existe() bool {
+	return i.id > 0
 }
 
-func (f *Inscripcion) SetEstado(estado string) {
-	f.estado = estado
+func (i *Inscripcion) EstaAprobada() bool {
+	return i.estado == "Aprobada"
 }
 
-func (f *Inscripcion) GetEstado() string {
-	return f.estado
+func (i *Inscripcion) EstaPreAprobada() bool {
+	return i.estado == "PreAprobada"
 }
 
-func (f *Inscripcion) SetAsistencia(asistencia string) {
-	f.asistencia = asistencia
+func (i *Inscripcion) EstaRechazada() bool {
+	return i.estado == "Rechazada"
 }
 
-func (f *Inscripcion) GetAsistencia() string {
-	return f.asistencia
+func (i *Inscripcion) Aprobar() bool {
+	return i.inscripcionRepo.Aprobar(i.id)
 }
 
-func (f *Inscripcion) SetComprobantePago(comprobante string) {
-	f.comprobatePago = comprobante
+func (i *Inscripcion) Anular() bool {
+	return i.inscripcionRepo.Rechazar(i.id)
 }
 
-func (f *Inscripcion) GetComprobantePago() string {
-	return f.comprobatePago
-}
-
-func (f *Inscripcion) SetFechaRegistro(fecha string) {
-	f.fechaRegistro = fecha
-}
-
-func (f *Inscripcion) GetFechaRegistro() string {
-	return f.fechaRegistro
-}
-
-func (f *Inscripcion) Crear() bool {
-	return f.inscripcionRepo.Crear(f)
-}
-
-func (f *Inscripcion) Existe() bool {
-	return f.id > 0
-}
-
-func (f *Inscripcion) EstaAprobada() bool {
-	return f.estado == "Aprobada"
-}
-
-func (f *Inscripcion) EstaPreAprobada() bool {
-	return f.estado == "PreAprobada"
-}
-
-func (f *Inscripcion) EstaAnulada() bool {
-	return f.estado == "Anulada"
-}
-
-func (f *Inscripcion) Aprobar() bool {
-	return f.inscripcionRepo.Aprobar(f.id)
-}
-
-func (f *Inscripcion) Anular() bool {
-	return f.inscripcionRepo.Anular(f.id)
-}
-
-func (f *Inscripcion) ToDTO() dto.InscripcionDTO {
+func (i *Inscripcion) ToDTO() dto.InscripcionDTO {
 	return dto.InscripcionDTO{
-		ID:             f.id,
-		Nombre:         f.nombre,
-		Documento:      f.documento,
-		Email:          f.email,
-		Ciudad:         f.ciudad,
-		Iglesia:        f.iglesia,
-		MedioPago:      f.medioPago,
-		HabeasData:     f.habeasData,
-		Estado:         f.estado,
-		ComprobatePago: f.comprobatePago,
-		Telefono:       f.telefono,
-		Asistencia:     f.asistencia,
-		FechaRegistro:  f.fechaRegistro,
+		ID:             i.id,
+		FormaPago:      i.formaPago,
+		MontoPagoCOP:   i.montoPagoCOP,
+		MontoPagoUSD:   i.montoPagoUSD,
+		UrlSoportePago: i.urlSoportePago,
+		FechaCreacion:  i.fechaCreacion,
+		Estado:         i.estado,
 	}
 }

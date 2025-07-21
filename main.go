@@ -40,15 +40,15 @@ func main() {
 	{
 		protected.POST("/logout", controller.Logout)
 
-		inscripcionGroup := protected.Group("/inscripciones")
-		{
-			inscripcionGroup.GET("", controller.ListarInscripciones)
-			inscripcionGroup.GET("/pendientes", controller.ListarInscripcionesPendientes)
-			inscripcionGroup.GET("/aprobadas", controller.ListarInscripcionesAprobadas)
-			inscripcionGroup.PUT("/anular/:id", controller.AnularInscripcion)
-			inscripcionGroup.PUT("/aprobar/:id", controller.AprobarInscripcion)
-			inscripcionGroup.POST("/pago-efectivo", controller.RealizarInscripcionPagoEfectivo)
-		}
+		// inscripcionGroup := protected.Group("/inscripciones")
+		// {
+		// 	inscripcionGroup.GET("", controller.ListarInscripciones)
+		// 	inscripcionGroup.GET("/pendientes", controller.ListarInscripcionesPendientes)
+		// 	inscripcionGroup.GET("/aprobadas", controller.ListarInscripcionesAprobadas)
+		// 	inscripcionGroup.PUT("/anular/:id", controller.AnularInscripcion)
+		// 	inscripcionGroup.PUT("/aprobar/:id", controller.AprobarInscripcion)
+		// 	inscripcionGroup.POST("/pago-efectivo", controller.RealizarInscripcionPagoEfectivo)
+		// }
 
 		estadisticaGroup := protected.Group("/estadisticas")
 		{

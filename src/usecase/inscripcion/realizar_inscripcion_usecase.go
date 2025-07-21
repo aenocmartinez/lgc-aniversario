@@ -3,10 +3,8 @@ package usecase
 import (
 	"fmt"
 	"lgc/src/domain"
-	"lgc/src/infraestructure/util"
 	"lgc/src/view/dto"
 	formrequest "lgc/src/view/form-request"
-	"os"
 )
 
 type RealizarInscripcionUseCase struct {
@@ -20,61 +18,43 @@ func NewRealizarInscripcionUseCase(inscripcionRepo domain.InscripcionRepository)
 }
 
 func (uc *RealizarInscripcionUseCase) Execute(req formrequest.InscripcionFormRequest) dto.APIResponse {
-	inscripcion := uc.inscripcionRepo.BuscarPorDocumento(req.Documento)
-	if inscripcion.Existe() {
-		if inscripcion.EstaAprobada() {
-			return dto.NewAPIResponse(
-				200,
-				fmt.Sprintf("El documento %s ya tiene una inscripción aprobada. Su participación en el evento ha sido confirmada.", req.Documento),
-				inscripcion.ToDTO(),
-			)
-		}
+	inscripcion := domain.NewInscripcion(uc.inscripcionRepo)
+	inscripcion.SetFormaPago(req.FormaPago)
+	inscripcion.SetMontoPagoCOP(req.MontoCOP)
+	inscripcion.SetMontoPagoUSD(req.MontoUSD)
+	inscripcion.SetUrlSoportePago(req.UrlSoportePago)
 
-		if inscripcion.EstaPreAprobada() {
-			return dto.NewAPIResponse(
-				200,
-				fmt.Sprintf("El documento %s ya cuenta con una inscripción registrada y se encuentra en proceso de validación.", req.Documento),
-				inscripcion.ToDTO(),
-			)
-		}
-	}
-
-	inscripcion.SetNombre(req.Nombre)
-	inscripcion.SetDocumento(req.Documento)
-	inscripcion.SetEmail(req.Email)
-	inscripcion.SetTelefono(req.Telefono)
-	inscripcion.SetHabeasData(req.HabeasData)
-	inscripcion.SetComprobantePago(req.ComprobatePago)
-	inscripcion.SetAsistencia(req.Asistencia)
-	inscripcion.SetCiudad(req.Ciudad)
-	inscripcion.SetIglesia(req.Iglesia)
 	inscripcion.SetEstado("PreAprobada")
-	inscripcion.SetMedioPago("Transferencia")
-
-	if req.Asistencia == "Presencial" {
-		cupoMax, err := util.ConvertStringToInt(os.Getenv("APP_CUPO_MAX"))
-		if err != nil {
-			cupoMax = 400
-		}
-
-		ok, err := uc.inscripcionRepo.CrearConValidacionDeCupo(inscripcion, cupoMax)
-		if err != nil {
-			if err.Error() == "cupo lleno" {
-				return dto.NewAPIResponse(200, "El cupo disponible ha sido completado, por lo tanto, no es posible procesar nuevas inscripciones.", nil)
-			}
-			return dto.NewAPIResponse(500, "Ha ocurrido un error al registrar la inscripción. Por favor, inténtelo de nuevo.", nil)
-		}
-
-		if ok {
-			return dto.NewAPIResponse(201, "La inscripción ha sido registrada exitosamente y el comprobante de pago ha sido recibido. Agradecemos su participación en el evento.", nil)
-		}
-	} else {
-
-		if uc.inscripcionRepo.Crear(inscripcion) {
-			return dto.NewAPIResponse(201, "La inscripción ha sido registrada exitosamente y el comprobante de pago ha sido recibido. Agradecemos su participación en el evento.", nil)
-		}
-		return dto.NewAPIResponse(500, "Ha ocurrido un error interno en el sistema. Por favor, intenta nuevamente más tarde.", nil)
+	if req.FormaPago == "efectivo" {
+		inscripcion.SetEstado("Aprobada")
 	}
 
-	return dto.NewAPIResponse(500, "No fue posible completar la inscripción. Inténtelo más tarde.", nil)
+	if req.FormaPago != "gratuito" {
+		if req.UrlSoportePago == "" {
+			return dto.NewAPIResponse(400, "Se requiere el soporte de pago cuando la forma de pago no es gratuita.", nil)
+		}
+	}
+
+	if !inscripcion.Crear() {
+		return dto.NewAPIResponse(500, "No fue posible registrar la inscripción. Intente nuevamente.", nil)
+	}
+
+	for _, p := range req.Participantes {
+		participante := domain.NewParticipante(nil)
+		participante.SetNombre(p.Nombre)
+		participante.SetDocumento(p.Documento)
+		participante.SetEmail(p.Email)
+		participante.SetTelefono(p.Telefono)
+		participante.SetModalidad(p.Modalidad)
+		participante.SetDiasAsistencia(p.DiasAsistencia)
+		participante.SetIglesia(p.Iglesia)
+		participante.SetCiudad(p.Ciudad)
+		participante.SetHabeasData(p.HabeasData)
+
+		if !inscripcion.AgregarParticipante(*participante) {
+			return dto.NewAPIResponse(500, fmt.Sprintf("No fue posible registrar al participante %s", p.Nombre), nil)
+		}
+	}
+
+	return dto.NewAPIResponse(201, "La inscripción ha sido registrada exitosamente. Agradecemos su participación en el evento.", nil)
 }
