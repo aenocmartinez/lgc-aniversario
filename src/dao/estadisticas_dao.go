@@ -14,83 +14,87 @@ func NewEstadisticasDao(db *gorm.DB) *EstadisticasDao {
 	return &EstadisticasDao{db: db}
 }
 
-func (i *EstadisticasDao) ObtenerResumenEstadisticas(cupoMax int) dto.EstadisticaResumenDTO {
-	// db := i.db
+func (i *EstadisticasDao) ObtenerResumenEstadisticasEvento(cupoMax int) dto.EstadisticaEventoDTO {
+	db := i.db
 
-	// // 1. Total por estado
-	// var estadoResults []struct {
-	// 	Estado string
-	// 	Total  int
-	// }
-	// db.Model(&formularioDB{}).
-	// 	Select("estado, COUNT(*) as total").
-	// 	Group("estado").
-	// 	Scan(&estadoResults)
+	// 1. Cupo presencial ocupado
+	var totalPresenciales int64
+	db.Table("participantes").
+		Where("modalidad = ? AND inscripcion_id IN (SELECT id FROM inscripciones WHERE estado != ?)", "presencial", "Rechazada").
+		Count(&totalPresenciales)
 
-	// totalPorEstado := map[string]int{}
-	// for _, r := range estadoResults {
-	// 	totalPorEstado[r.Estado] = r.Total
-	// }
+	// 2. Total por modalidad
+	var modalidadResults []struct {
+		Modalidad string
+		Total     int
+	}
+	db.Table("participantes").
+		Select("modalidad, COUNT(*) as total").
+		Group("modalidad").
+		Scan(&modalidadResults)
 
-	// // 2. Total por asistencia
-	// var asistenciaResults []struct {
-	// 	Asistencia string
-	// 	Total      int
-	// }
-	// db.Model(&formularioDB{}).
-	// 	Select("asistencia, COUNT(*) as total").
-	// 	Group("asistencia").
-	// 	Scan(&asistenciaResults)
+	totalPorModalidad := map[string]int{}
+	for _, r := range modalidadResults {
+		totalPorModalidad[r.Modalidad] = r.Total
+	}
 
-	// totalPorAsistencia := map[string]int{}
-	// for _, r := range asistenciaResults {
-	// 	totalPorAsistencia[r.Asistencia] = r.Total
-	// }
+	// 3. Total por días de asistencia
+	var diasAsistenciaResults []struct {
+		Dia   string
+		Total int
+	}
+	db.Table("participantes").
+		Select("dias_asistencia as dia, COUNT(*) as total").
+		Group("dias_asistencia").
+		Scan(&diasAsistenciaResults)
 
-	// // 3. Total sin iglesia
-	// var totalSinIglesia int64
-	// db.Model(&formularioDB{}).Where("TRIM(iglesia) = 'No asiste a una iglesia'").Count(&totalSinIglesia)
+	totalPorDiaAsistencia := map[string]int{}
+	for _, r := range diasAsistenciaResults {
+		totalPorDiaAsistencia[r.Dia] = r.Total
+	}
 
-	// // 4. Distribución por estado y asistencia
-	// var estadoAsistenciaResults []struct {
-	// 	Estado     string
-	// 	Asistencia string
-	// 	Total      int
-	// }
-	// db.Model(&formularioDB{}).
-	// 	Select("estado, asistencia, COUNT(*) as total").
-	// 	Group("estado, asistencia").
-	// 	Scan(&estadoAsistenciaResults)
+	// 4. Estado por forma de pago
+	var estadoPagoResults []struct {
+		FormaPago string
+		Estado    string
+		Total     int
+	}
+	db.Table("inscripciones").
+		Select("forma_pago, estado, COUNT(*) as total").
+		Group("forma_pago, estado").
+		Scan(&estadoPagoResults)
 
-	// distribucion := map[string]map[string]int{}
-	// for _, r := range estadoAsistenciaResults {
-	// 	if distribucion[r.Estado] == nil {
-	// 		distribucion[r.Estado] = map[string]int{}
-	// 	}
-	// 	distribucion[r.Estado][r.Asistencia] = r.Total
-	// }
+	estadoPorFormaPago := map[string]map[string]int{}
+	for _, r := range estadoPagoResults {
+		if _, ok := estadoPorFormaPago[r.FormaPago]; !ok {
+			estadoPorFormaPago[r.FormaPago] = map[string]int{}
+		}
+		estadoPorFormaPago[r.FormaPago][r.Estado] = r.Total
+	}
 
-	// // 5. Inscripciones por día
-	// var inscripcionesPorDia []dto.InscripcionesDiaDTO
-	// db.Model(&formularioDB{}).
-	// 	Select("DATE(fecha_registro) as fecha, COUNT(*) as total").
-	// 	Group("DATE(fecha_registro)").
-	// 	Order("fecha").
-	// 	Scan(&inscripcionesPorDia)
+	// 5. Inscripciones por día
+	var inscripcionesPorDia []dto.InscripcionesDiaDTO
+	db.Table("inscripciones").
+		Select("DATE(created_at) as fecha, COUNT(*) as total").
+		Group("DATE(created_at)").
+		Order("fecha").
+		Scan(&inscripcionesPorDia)
 
-	// // 6. Cupo restante presencial
-	// var totalPresenciales int64
-	// db.Model(&formularioDB{}).
-	// 	Where("asistencia = 'Presencial' AND estado != 'Anulada'").
-	// 	Count(&totalPresenciales)
+	// 6. Participantes sin iglesia
+	var totalSinIglesia int64
+	db.Table("participantes").
+		Where("TRIM(iglesia) = '' OR iglesia IS NULL").
+		Count(&totalSinIglesia)
 
-	// return dto.EstadisticaResumenDTO{
-	// 	TotalPorEstado:               totalPorEstado,
-	// 	TotalPorAsistencia:           totalPorAsistencia,
-	// 	TotalSinIglesia:              int(totalSinIglesia),
-	// 	DistribucionEstadoAsistencia: distribucion,
-	// 	InscripcionesPorDia:          inscripcionesPorDia,
-	// 	CupoRestantePresencial:       cupoMax - int(totalPresenciales),
-	// }
-	return dto.EstadisticaResumenDTO{}
+	return dto.EstadisticaEventoDTO{
+		CupoMaximoPresencial:    cupoMax,
+		CupoUtilizadoPresencial: int(totalPresenciales),
+		CupoRestantePresencial:  cupoMax - int(totalPresenciales),
+		TotalPorModalidad:       totalPorModalidad,
+		TotalPorDiaAsistencia:   totalPorDiaAsistencia,
+		EstadoPorFormaPago:      estadoPorFormaPago,
+		TotalSinIglesia:         int(totalSinIglesia),
+		InscripcionesPorDia:     inscripcionesPorDia,
+	}
+
 }

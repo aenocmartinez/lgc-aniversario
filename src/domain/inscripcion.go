@@ -107,7 +107,7 @@ func (i *Inscripcion) Aprobar() bool {
 	return i.inscripcionRepo.Aprobar(i.id)
 }
 
-func (i *Inscripcion) Anular() bool {
+func (i *Inscripcion) Rechazar() bool {
 	return i.inscripcionRepo.Rechazar(i.id)
 }
 

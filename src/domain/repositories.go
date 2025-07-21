@@ -20,6 +20,7 @@ type InscripcionRepository interface {
 	Aprobar(inscripcionID int64) bool
 	Rechazar(inscripcionID int64) bool
 	CuposDisponibles(cupoMax int) (ocupados int, disponibles int)
+	ListarConParticipantes() []dto.InscripcionConParticipantesDTO
 }
 
 type ParticipanteRepository interface {
@@ -28,5 +29,5 @@ type ParticipanteRepository interface {
 }
 
 type EstadisticasRepository interface {
-	ObtenerResumenEstadisticas(cupoMax int) dto.EstadisticaResumenDTO
+	ObtenerResumenEstadisticasEvento(cupoMax int) dto.EstadisticaEventoDTO
 }

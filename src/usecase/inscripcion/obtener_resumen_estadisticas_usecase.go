@@ -23,7 +23,7 @@ func (uc *ObtenerResumenEstadisticasUseCase) Execute() dto.APIResponse {
 		cupoMax = 400
 	}
 
-	resumen := uc.estadisticasRepo.ObtenerResumenEstadisticas(cupoMax)
+	resumen := uc.estadisticasRepo.ObtenerResumenEstadisticasEvento(cupoMax)
 
 	return dto.NewAPIResponse(200, "Resumen generado correctamente", resumen)
 }

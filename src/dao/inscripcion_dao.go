@@ -3,6 +3,7 @@ package dao
 import (
 	"fmt"
 	"lgc/src/domain"
+	"lgc/src/view/dto"
 	"log"
 	"time"
 
@@ -132,6 +133,49 @@ func (i *InscripcionDao) Listar() []domain.Inscripcion {
 		ins.SetEstado(m.Estado)
 		ins.SetFechaCreacion(m.FechaCreacion.Format("2006-01-02 15:04:05"))
 		resultado = append(resultado, *ins)
+	}
+
+	return resultado
+}
+
+func (i *InscripcionDao) ListarConParticipantes() []dto.InscripcionConParticipantesDTO {
+	var inscripciones []inscripcionModel
+	var resultado []dto.InscripcionConParticipantesDTO
+
+	// Obtener todas las inscripciones ordenadas por ID descendente
+	i.db.Order("id desc").Find(&inscripciones)
+
+	for _, ins := range inscripciones {
+		// Obtener los participantes asociados a esta inscripción
+		rows, err := i.db.Raw(`
+			SELECT nombre_completo, numero_documento, correo_electronico,
+			       telefono, modalidad, dias_asistencia, iglesia, ciudad, autorizacion_datos
+			FROM participantes
+			WHERE inscripcion_id = ?`, ins.ID).Rows()
+		if err != nil {
+			continue
+		}
+
+		defer rows.Close()
+
+		var participantes []dto.ParticipanteDTO
+
+		for rows.Next() {
+			var p dto.ParticipanteDTO
+			rows.Scan(&p.Nombre, &p.Documento, &p.Email, &p.Telefono, &p.Modalidad, &p.DiasAsistencia, &p.Iglesia, &p.Ciudad, &p.HabeasData)
+			participantes = append(participantes, p)
+		}
+
+		resultado = append(resultado, dto.InscripcionConParticipantesDTO{
+			ID:             ins.ID,
+			FormaPago:      ins.FormaPago,
+			MontoPagoCOP:   ins.MontoPagoCOP,
+			MontoPagoUSD:   ins.MontoPagoUSD,
+			UrlSoportePago: ins.UrlSoportePago,
+			Estado:         ins.Estado,
+			FechaCreacion:  ins.FechaCreacion.Format("2006-01-02 15:04:05"),
+			Participantes:  participantes,
+		})
 	}
 
 	return resultado

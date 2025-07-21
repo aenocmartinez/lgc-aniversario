@@ -9,21 +9,13 @@ type ListarInscripcionesUseCase struct {
 	inscripcionRepo domain.InscripcionRepository
 }
 
-func NewListarInscripcionesUseCase(inscripcionRepo domain.InscripcionRepository) *ListarInscripcionesUseCase {
-	return &ListarInscripcionesUseCase{
-		inscripcionRepo: inscripcionRepo,
-	}
+func NewListarInscripcionesUseCase(repo domain.InscripcionRepository) *ListarInscripcionesUseCase {
+	return &ListarInscripcionesUseCase{inscripcionRepo: repo}
 }
 
 func (uc *ListarInscripcionesUseCase) Execute() dto.APIResponse {
 
-	result := uc.inscripcionRepo.Listar()
+	resultado := uc.inscripcionRepo.ListarConParticipantes()
 
-	inscripciones := []dto.InscripcionDTO{}
-	for _, inscripcion := range result {
-
-		inscripciones = append(inscripciones, inscripcion.ToDTO())
-	}
-
-	return dto.NewAPIResponse(200, "Listado de Inscripciones", inscripciones)
+	return dto.NewAPIResponse(200, "Listado de inscripciones con participantes", resultado)
 }

@@ -2,7 +2,9 @@ package controller
 
 import (
 	"lgc/src/infraestructure/di"
+	"lgc/src/infraestructure/util"
 	usecase "lgc/src/usecase/inscripcion"
+	"lgc/src/view/dto"
 	formrequest "lgc/src/view/form-request"
 	"net/http"
 
@@ -35,83 +37,44 @@ func ConsultarCuposDisponibles(c *gin.Context) {
 	c.JSON(response.StatusCode, response)
 }
 
-// func RealizarInscripcionPagoEfectivo(c *gin.Context) {
+func ListarInscripciones(c *gin.Context) {
+	listarInscripciones := usecase.NewListarInscripcionesUseCase(
+		di.GetContainer().GetInscripcionRepository(),
+	)
 
-// 	var req formrequest.InscripcionPagoEfectivoFormRequest
+	response := listarInscripciones.Execute()
 
-// 	err := c.ShouldBindJSON(&req)
-// 	if err != nil {
-// 		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
-// 		return
-// 	}
+	c.JSON(response.StatusCode, response)
+}
 
-// 	realizarInscripcion := usecase.NewRealizarInscripcionPagoEnEfectivoUseCase(
-// 		di.GetContainer().GetInscripcionRepository(),
-// 	)
+func RechazarInscripcion(c *gin.Context) {
+	id, err := util.ConvertStringToID(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dto.NewAPIResponse(http.StatusBadRequest, "ID inválido", nil))
+		return
+	}
 
-// 	response := realizarInscripcion.Execute(req)
+	anularInscripcion := usecase.NewRechazarInscripcionUseCase(
+		di.GetContainer().GetInscripcionRepository(),
+	)
 
-// 	c.JSON(response.StatusCode, response)
-// }
+	response := anularInscripcion.Execute(id)
 
-// func ListarInscripciones(c *gin.Context) {
-// 	listarInscripciones := usecase.NewListarInscripcionesUseCase(
-// 		di.GetContainer().GetInscripcionRepository(),
-// 	)
+	c.JSON(response.StatusCode, response)
+}
 
-// 	response := listarInscripciones.Execute()
+func AprobarInscripcion(c *gin.Context) {
+	id, err := util.ConvertStringToID(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dto.NewAPIResponse(http.StatusBadRequest, "ID inválido", nil))
+		return
+	}
 
-// 	c.JSON(response.StatusCode, response)
-// }
+	aprobarInscripcion := usecase.NewAprobarInscripcionUseCase(
+		di.GetContainer().GetInscripcionRepository(),
+	)
 
-// func ListarInscripcionesPendientes(c *gin.Context) {
-// 	listarInscripciones := usecase.NewListarInscripcionesPendientesUseCase(
-// 		di.GetContainer().GetInscripcionRepository(),
-// 	)
+	response := aprobarInscripcion.Execute(id)
 
-// 	response := listarInscripciones.Execute()
-
-// 	c.JSON(response.StatusCode, response)
-// }
-
-// func ListarInscripcionesAprobadas(c *gin.Context) {
-// 	listarInscripciones := usecase.NewListarInscripcionesAprobadasUseCase(
-// 		di.GetContainer().GetInscripcionRepository(),
-// 	)
-
-// 	response := listarInscripciones.Execute()
-
-// 	c.JSON(response.StatusCode, response)
-// }
-
-// func AnularInscripcion(c *gin.Context) {
-// 	id, err := util.ConvertStringToID(c.Param("id"))
-// 	if err != nil {
-// 		c.JSON(http.StatusBadRequest, dto.NewAPIResponse(http.StatusBadRequest, "ID inválido", nil))
-// 		return
-// 	}
-
-// 	anularInscripcion := usecase.NewAnularInscripcionUseCase(
-// 		di.GetContainer().GetInscripcionRepository(),
-// 	)
-
-// 	response := anularInscripcion.Execute(id)
-
-// 	c.JSON(response.StatusCode, response)
-// }
-
-// func AprobarInscripcion(c *gin.Context) {
-// 	id, err := util.ConvertStringToID(c.Param("id"))
-// 	if err != nil {
-// 		c.JSON(http.StatusBadRequest, dto.NewAPIResponse(http.StatusBadRequest, "ID inválido", nil))
-// 		return
-// 	}
-
-// 	aprobarInscripcion := usecase.NewAprobarInscripcionUseCase(
-// 		di.GetContainer().GetInscripcionRepository(),
-// 	)
-
-// 	response := aprobarInscripcion.Execute(id)
-
-// 	c.JSON(response.StatusCode, response)
-// }
+	c.JSON(response.StatusCode, response)
+}
