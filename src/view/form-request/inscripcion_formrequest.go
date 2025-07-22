@@ -15,7 +15,7 @@ type ParticipanteRequest struct {
 type InscripcionFormRequest struct {
 	FormaPago      string                `json:"forma_pago" binding:"required,oneof=efectivo transaccion gratuito"`
 	MontoCOP       int                   `json:"monto_cop" binding:"omitempty,min=0"`
-	MontoUSD       int                   `json:"monto_usd" binding:"omitempty,min=0"`
+	MontoUSD       float32               `json:"monto_usd" binding:"omitempty,min=0"`
 	UrlSoportePago string                `json:"url_soporte_pago" binding:"omitempty,url"`
 	Participantes  []ParticipanteRequest `json:"participantes" binding:"required,dive"`
 }

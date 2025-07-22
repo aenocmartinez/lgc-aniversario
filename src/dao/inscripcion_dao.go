@@ -22,7 +22,7 @@ type inscripcionModel struct {
 	ID             int64     `gorm:"primaryKey;column:id"`
 	FormaPago      string    `gorm:"column:forma_pago"`
 	MontoPagoCOP   int       `gorm:"column:monto_pagado_cop"`
-	MontoPagoUSD   int       `gorm:"column:monto_pagado_usd"`
+	MontoPagoUSD   float32   `gorm:"column:monto_pagado_usd"`
 	UrlSoportePago string    `gorm:"column:soporte_pago_url"`
 	Estado         string    `gorm:"column:estado"`
 	FechaCreacion  time.Time `gorm:"column:created_at;<-:false"`
@@ -284,9 +284,13 @@ func (dao *InscripcionDao) CuposDisponibles(cupoMax int) (int, int) {
 	var ocupados int64
 
 	dao.db.Raw(`
-		SELECT COUNT(*) FROM participantes p
+		SELECT COUNT(*) 
+		FROM participantes p
 		INNER JOIN inscripciones i ON i.id = p.inscripcion_id
-		WHERE p.modalidad = 'presencial' AND i.estado != 'Rechazada'
+		WHERE 
+			p.modalidad = 'presencial' 
+			AND p.dias_asistencia = 'sabado'
+			AND i.estado != 'Rechazada'
 	`).Scan(&ocupados)
 
 	return int(ocupados), cupoMax - int(ocupados)

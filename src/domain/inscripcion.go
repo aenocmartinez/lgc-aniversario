@@ -6,7 +6,7 @@ type Inscripcion struct {
 	id              int64
 	formaPago       string
 	montoPagoCOP    int
-	montoPagoUSD    int
+	montoPagoUSD    float32
 	urlSoportePago  string
 	fechaCreacion   string
 	estado          string
@@ -43,11 +43,11 @@ func (i *Inscripcion) GetMontoPagoCOP() int {
 	return i.montoPagoCOP
 }
 
-func (i *Inscripcion) SetMontoPagoUSD(montoPagoUSD int) {
+func (i *Inscripcion) SetMontoPagoUSD(montoPagoUSD float32) {
 	i.montoPagoUSD = montoPagoUSD
 }
 
-func (i *Inscripcion) GetMontoPagoUSD() int {
+func (i *Inscripcion) GetMontoPagoUSD() float32 {
 	return i.montoPagoUSD
 }
 

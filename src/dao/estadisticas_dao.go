@@ -20,7 +20,8 @@ func (i *EstadisticasDao) ObtenerResumenEstadisticasEvento(cupoMax int) dto.Esta
 	// 1. Cupo presencial ocupado
 	var totalPresenciales int64
 	db.Table("participantes").
-		Where("modalidad = ? AND inscripcion_id IN (SELECT id FROM inscripciones WHERE estado != ?)", "presencial", "Rechazada").
+		Where("modalidad = ? AND dias_asistencia = ? AND inscripcion_id IN (SELECT id FROM inscripciones WHERE estado != ?)",
+			"presencial", "sabado", "Rechazada").
 		Count(&totalPresenciales)
 
 	// 2. Total por modalidad
@@ -83,7 +84,7 @@ func (i *EstadisticasDao) ObtenerResumenEstadisticasEvento(cupoMax int) dto.Esta
 	// 6. Participantes sin iglesia
 	var totalSinIglesia int64
 	db.Table("participantes").
-		Where("TRIM(iglesia) = '' OR iglesia IS NULL").
+		Where("TRIM(iglesia) = 'No asiste a una iglesia'").
 		Count(&totalSinIglesia)
 
 	return dto.EstadisticaEventoDTO{

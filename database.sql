@@ -54,6 +54,8 @@ CREATE TABLE inscripciones (
 ALTER TABLE inscripciones 
 MODIFY COLUMN forma_pago ENUM('efectivo', 'transaccion', 'gratuito') NOT NULL;
 
+ALTER TABLE inscripciones 
+MODIFY COLUMN monto_pagado_usd DECIMAL(10,2) NOT NULL;
 
 
 
