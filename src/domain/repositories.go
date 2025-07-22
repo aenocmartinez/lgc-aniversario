@@ -21,6 +21,8 @@ type InscripcionRepository interface {
 	Rechazar(inscripcionID int64) bool
 	CuposDisponibles(cupoMax int) (ocupados int, disponibles int)
 	ListarConParticipantes() []dto.InscripcionConParticipantesDTO
+	BuscarParticipantePorDocumento(documento string) (*Participante, string, error)
+	EliminarParticipanteYValidarInscripcion(participanteID int64) error
 }
 
 type ParticipanteRepository interface {

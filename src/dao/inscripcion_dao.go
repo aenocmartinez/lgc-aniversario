@@ -59,26 +59,30 @@ func (dao *InscripcionDao) CrearConValidacionDeCupo(
 	cupoMax int,
 ) error {
 	return dao.db.Transaction(func(tx *gorm.DB) error {
+		// ✅ 1. Contar ocupados: solo presencial del sábado y que la inscripción no esté rechazada
 		var ocupados int64
 		tx.Raw(`
 			SELECT COUNT(*)
 			FROM participantes p
 			INNER JOIN inscripciones i ON i.id = p.inscripcion_id
-			WHERE p.modalidad = 'presencial' AND i.estado != 'Rechazada'
+			WHERE p.modalidad = 'presencial' AND p.dias_asistencia = 'sabado' AND i.estado != 'Rechazada'
 			FOR UPDATE
 		`).Scan(&ocupados)
 
+		// ✅ 2. Contar los nuevos participantes que aplican a esta condición
 		var solicitados int
 		for _, p := range participantes {
-			if p.GetModalidad() == "presencial" {
+			if p.GetModalidad() == "presencial" && p.GetDiasAsistencia() == "sabado" {
 				solicitados++
 			}
 		}
 
+		// ✅ 3. Validar cupo
 		if int(ocupados)+solicitados > cupoMax {
 			return fmt.Errorf("cupo lleno")
 		}
 
+		// ✅ 4. Crear inscripción
 		model := inscripcionModel{
 			FormaPago:      inscripcion.GetFormaPago(),
 			MontoPagoCOP:   inscripcion.GetMontoPagoCOP(),
@@ -86,12 +90,12 @@ func (dao *InscripcionDao) CrearConValidacionDeCupo(
 			UrlSoportePago: inscripcion.GetUrlSoportePago(),
 			Estado:         inscripcion.GetEstado(),
 		}
-
 		if err := tx.Create(&model).Error; err != nil {
 			return err
 		}
 		inscripcion.SetID(model.ID)
 
+		// ✅ 5. Crear participantes
 		for _, p := range participantes {
 			if err := tx.Exec(`
 				INSERT INTO participantes (
@@ -286,4 +290,77 @@ func (dao *InscripcionDao) CuposDisponibles(cupoMax int) (int, int) {
 	`).Scan(&ocupados)
 
 	return int(ocupados), cupoMax - int(ocupados)
+}
+
+func (dao *InscripcionDao) BuscarParticipantePorDocumento(documento string) (*domain.Participante, string, error) {
+	var result struct {
+		ID            int64
+		InscripcionID int64
+		Estado        string
+	}
+
+	err := dao.db.Raw(`
+		SELECT p.id, p.inscripcion_id, i.estado
+		FROM participantes p
+		INNER JOIN inscripciones i ON i.id = p.inscripcion_id
+		WHERE p.numero_documento = ?
+		LIMIT 1
+	`, documento).Scan(&result).Error
+
+	if err != nil {
+		return nil, "", err
+	}
+	if result.ID == 0 {
+		return nil, "", nil // No encontrado
+	}
+
+	participante := domain.NewParticipante(nil)
+	participante.SetID(result.ID)
+
+	inscripcion := dao.BuscarPorID(result.InscripcionID)
+
+	participante.SetInscripcion(&inscripcion)
+	// participante.SetInscripcionID(result.InscripcionID)
+
+	return participante, result.Estado, nil
+}
+
+func (dao *InscripcionDao) EliminarParticipanteYValidarInscripcion(participanteID int64) error {
+	return dao.db.Transaction(func(tx *gorm.DB) error {
+		var inscripcionID int64
+		err := tx.Raw(`SELECT inscripcion_id FROM participantes WHERE id = ?`, participanteID).Scan(&inscripcionID).Error
+		if err != nil {
+			log.Println("SELECT inscripción_id error:", err)
+			return err
+		}
+		if inscripcionID == 0 {
+			log.Println("No se encontró inscripción asociada al participante")
+			return fmt.Errorf("inscripción no encontrada para el participante")
+		}
+		log.Println("inscripcionID:", inscripcionID)
+
+		var total int64
+		err = tx.Raw(`SELECT COUNT(*) FROM participantes WHERE inscripcion_id = ?`, inscripcionID).Scan(&total).Error
+		if err != nil {
+			log.Println("SELECT COUNT error:", err)
+			return err
+		}
+		log.Println("Total participantes en inscripción:", total)
+
+		if err := tx.Exec(`DELETE FROM participantes WHERE id = ?`, participanteID).Error; err != nil {
+			log.Println("Error al eliminar participante:", err)
+			return err
+		}
+		log.Println("Participante eliminado con éxito")
+
+		if total == 1 {
+			if err := tx.Exec(`DELETE FROM inscripciones WHERE id = ?`, inscripcionID).Error; err != nil {
+				log.Println("Error al eliminar inscripción:", err)
+				return err
+			}
+			log.Println("Inscripción también eliminada")
+		}
+
+		return nil
+	})
 }

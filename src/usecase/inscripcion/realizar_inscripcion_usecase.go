@@ -1,10 +1,12 @@
 package usecase
 
 import (
+	"fmt"
 	"lgc/src/domain"
 	"lgc/src/infraestructure/util"
 	"lgc/src/view/dto"
 	formrequest "lgc/src/view/form-request"
+	"log"
 	"os"
 )
 
@@ -19,29 +21,43 @@ func NewRealizarInscripcionUseCase(inscripcionRepo domain.InscripcionRepository)
 }
 
 func (uc *RealizarInscripcionUseCase) Execute(req formrequest.InscripcionFormRequest) dto.APIResponse {
-
 	cupoMax, err := util.ConvertStringToInt(os.Getenv("APP_CUPO_MAX"))
 	if err != nil {
 		cupoMax = 400
 	}
 
-	inscripcion := domain.NewInscripcion(uc.inscripcionRepo)
-	inscripcion.SetFormaPago(req.FormaPago)
-	inscripcion.SetMontoPagoCOP(req.MontoCOP)
-	inscripcion.SetMontoPagoUSD(req.MontoUSD)
-	inscripcion.SetUrlSoportePago(req.UrlSoportePago)
-	inscripcion.SetEstado("PreAprobada")
-
-	if req.FormaPago == "efectivo" {
-		inscripcion.SetEstado("Aprobada")
-	}
-
-	if req.FormaPago != "gratuito" && req.UrlSoportePago == "" {
-		return dto.NewAPIResponse(400, "Se requiere el soporte de pago cuando la forma de pago no es gratuita.", nil)
-	}
-
 	var participantes []domain.Participante
 	for _, p := range req.Participantes {
+		existente, estadoInscripcion, err := uc.inscripcionRepo.BuscarParticipantePorDocumento(p.Documento)
+		if err != nil {
+			return dto.NewAPIResponse(500, fmt.Sprintf("Error al verificar el documento %s", p.Documento), nil)
+		}
+
+		if existente != nil {
+			formaPago := existente.GetInscripcion().GetFormaPago()
+
+			log.Println("formaPago: ", formaPago)
+			log.Println("estadoInscripcion: ", estadoInscripcion)
+
+			if estadoInscripcion == "Aprobada" && formaPago != "gratuito" {
+				msg := fmt.Sprintf("El participante con documento %s ya está aprobado y no puede volver a inscribirse.", p.Documento)
+				return dto.NewAPIResponse(400, msg, nil)
+			}
+
+			if formaPago == "gratuito" {
+				fmt.Println("Etrana Eliminar Participante")
+				// Eliminar al participante para permitir nueva inscripción
+				err := uc.inscripcionRepo.EliminarParticipanteYValidarInscripcion(existente.GetID())
+				if err != nil {
+					return dto.NewAPIResponse(500, fmt.Sprintf("Error al eliminar el participante anterior con documento %s", p.Documento), nil)
+				}
+			} else {
+				msg := fmt.Sprintf("El participante con documento %s ya tiene una inscripción activa.", p.Documento)
+				return dto.NewAPIResponse(400, msg, nil)
+			}
+		}
+
+		// Crear nuevo participante
 		participante := domain.NewParticipante(nil)
 		participante.SetNombre(p.Nombre)
 		participante.SetDocumento(p.Documento)
@@ -53,6 +69,24 @@ func (uc *RealizarInscripcionUseCase) Execute(req formrequest.InscripcionFormReq
 		participante.SetCiudad(p.Ciudad)
 		participante.SetHabeasData(p.HabeasData)
 		participantes = append(participantes, *participante)
+	}
+
+	// Crear inscripción
+	inscripcion := domain.NewInscripcion(uc.inscripcionRepo)
+	inscripcion.SetFormaPago(req.FormaPago)
+	inscripcion.SetMontoPagoCOP(req.MontoCOP)
+	inscripcion.SetMontoPagoUSD(req.MontoUSD)
+
+	if req.FormaPago == "efectivo" || req.FormaPago == "gratuito" {
+		inscripcion.SetEstado("Aprobada")
+	} else {
+		inscripcion.SetEstado("PreAprobada")
+	}
+
+	if req.FormaPago != "efectivo" {
+		inscripcion.SetUrlSoportePago(req.UrlSoportePago)
+	} else {
+		inscripcion.SetUrlSoportePago("Pago en efectivo")
 	}
 
 	err = uc.inscripcionRepo.CrearConValidacionDeCupo(inscripcion, participantes, cupoMax)

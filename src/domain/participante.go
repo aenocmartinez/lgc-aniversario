@@ -11,6 +11,7 @@ type Participante struct {
 	iglesia          string
 	ciudad           string
 	habeasData       bool
+	inscripcion      *Inscripcion
 	participanteRepo ParticipanteRepository
 }
 
@@ -18,6 +19,14 @@ func NewParticipante(participanteRepo ParticipanteRepository) *Participante {
 	return &Participante{
 		participanteRepo: participanteRepo,
 	}
+}
+
+func (p *Participante) SetInscripcion(inscripcion *Inscripcion) {
+	p.inscripcion = inscripcion
+}
+
+func (p *Participante) GetInscripcion() *Inscripcion {
+	return p.inscripcion
 }
 
 func (p *Participante) GetID() int64 {
