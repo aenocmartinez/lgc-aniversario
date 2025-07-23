@@ -87,6 +87,38 @@ func (i *EstadisticasDao) ObtenerResumenEstadisticasEvento(cupoMax int) dto.Esta
 		Where("TRIM(iglesia) = 'No asiste a una iglesia'").
 		Count(&totalSinIglesia)
 
+	// 7. Total Recaudo COP y USD (solo inscripciones aprobadas o preaprobadas)
+	var totalCOP, totalUSD float64
+	db.Table("inscripciones").
+		Select("SUM(monto_pagado_cop), SUM(monto_pagado_usd)").
+		Where("estado IN ?", []string{"Aprobada", "PreAprobada"}).
+		Row().
+		Scan(&totalCOP, &totalUSD)
+
+	// 8. Recaudo por modalidad
+	type RecaudoPorModalidad struct {
+		Modalidad string
+		TotalCOP  float64
+		TotalUSD  float64
+	}
+
+	var recaudos []RecaudoPorModalidad
+
+	db.Table("participantes AS p").
+		Select("p.modalidad, SUM(i.monto_pagado_cop) AS total_cop, SUM(i.monto_pagado_usd) AS total_usd").
+		Joins("JOIN inscripciones i ON i.id = p.inscripcion_id").
+		Where("i.estado IN ?", []string{"Aprobada", "PreAprobada"}).
+		Group("p.modalidad").
+		Scan(&recaudos)
+
+	recaudoPorModalidad := map[string]map[string]float64{}
+	for _, r := range recaudos {
+		recaudoPorModalidad[r.Modalidad] = map[string]float64{
+			"cop": r.TotalCOP,
+			"usd": r.TotalUSD,
+		}
+	}
+
 	return dto.EstadisticaEventoDTO{
 		CupoMaximoPresencial:    cupoMax,
 		CupoUtilizadoPresencial: int(totalPresenciales),
@@ -96,6 +128,63 @@ func (i *EstadisticasDao) ObtenerResumenEstadisticasEvento(cupoMax int) dto.Esta
 		EstadoPorFormaPago:      estadoPorFormaPago,
 		TotalSinIglesia:         int(totalSinIglesia),
 		InscripcionesPorDia:     inscripcionesPorDia,
+		TotalRecaudoCOP:         totalCOP,
+		TotalRecaudoUSD:         totalUSD,
+		RecaudoPorModalidad:     recaudoPorModalidad,
+	}
+}
+
+func (i *EstadisticasDao) ObtenerReporteParaContador() []dto.ReporteContadorInscripcionDTO {
+	db := i.db
+
+	// 1. Obtener todas las inscripciones que no son gratuitas
+	var inscripciones []struct {
+		ID             int
+		FormaPago      string
+		MontoPagadoCOP float64
+		MontoPagadoUSD float64
+		SoportePagoURL string
+	}
+	db.Table("inscripciones").
+		Select("id, forma_pago, monto_pagado_cop, monto_pagado_usd, soporte_pago_url").
+		Where("forma_pago != ?", "gratuito").
+		Find(&inscripciones)
+
+	// 2. Obtener todos los participantes relacionados
+	var participantes []struct {
+		InscripcionID   int
+		NombreCompleto  string
+		NumeroDocumento string
+		Telefono        string
+	}
+	db.Table("participantes").
+		Select("inscripcion_id, nombre_completo, numero_documento, telefono").
+		Where("inscripcion_id IN (?)", db.Table("inscripciones").Select("id").Where("forma_pago != ?", "gratuito")).
+		Find(&participantes)
+
+	// 3. Agrupar participantes por inscripción
+	participantesPorInscripcion := make(map[int][]dto.ReporteContadorParticipanteDTO)
+	for _, p := range participantes {
+		dtoPart := dto.ReporteContadorParticipanteDTO{
+			NombreCompleto:  p.NombreCompleto,
+			NumeroDocumento: p.NumeroDocumento,
+			Telefono:        p.Telefono,
+		}
+		participantesPorInscripcion[p.InscripcionID] = append(participantesPorInscripcion[p.InscripcionID], dtoPart)
 	}
 
+	// 4. Construir el DTO final
+	var resultado []dto.ReporteContadorInscripcionDTO
+	for _, insc := range inscripciones {
+		resultado = append(resultado, dto.ReporteContadorInscripcionDTO{
+			ID:             insc.ID,
+			FormaPago:      insc.FormaPago,
+			MontoPagadoCOP: insc.MontoPagadoCOP,
+			MontoPagadoUSD: insc.MontoPagadoUSD,
+			SoportePagoURL: insc.SoportePagoURL,
+			Participantes:  participantesPorInscripcion[insc.ID],
+		})
+	}
+
+	return resultado
 }

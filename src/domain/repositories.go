@@ -26,10 +26,10 @@ type InscripcionRepository interface {
 }
 
 type ParticipanteRepository interface {
-	CrearParticipante(participante Participante) bool
-	BuscarPartipante(participanteID int64) Participante
+	ObtenerParticipantesParaLogistica() []dto.ReporteLogisticaDTO
 }
 
 type EstadisticasRepository interface {
 	ObtenerResumenEstadisticasEvento(cupoMax int) dto.EstadisticaEventoDTO
+	ObtenerReporteParaContador() []dto.ReporteContadorInscripcionDTO
 }

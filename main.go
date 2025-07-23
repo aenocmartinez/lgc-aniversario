@@ -35,6 +35,8 @@ func main() {
 	r.POST("/realizar-inscripcion", controller.RealizarInscripcion)
 	r.POST("/cargar-soporte-pago", controller.CargarArchivoDePago)
 	r.GET("/cupos-disponibles", controller.ConsultarCuposDisponibles)
+	r.GET("/estadisticas/resumen", controller.ObtenerResumenEstadisticas)
+	r.GET("/estadisticas/inscripciones", controller.ListarInscripciones)
 
 	protected := r.Group("/api")
 	protected.Use(middleware.AuthMiddleware())
@@ -48,9 +50,11 @@ func main() {
 			inscripcionGroup.PUT("/aprobar/:id", controller.AprobarInscripcion)
 		}
 
-		estadisticaGroup := protected.Group("/estadisticas")
+		reportesGroup := protected.Group("/reportes")
 		{
-			estadisticaGroup.GET("/resumen", controller.ObtenerResumenEstadisticas)
+			reportesGroup.GET("/relacion-ingresos", controller.ReporteRelacionDeIngresos)
+			reportesGroup.GET("/relacion-ingresos/excel", controller.DescargarRelacionIngresosExcel)
+			reportesGroup.GET("/logistica", controller.DescargarReporteLogistica)
 		}
 	}
 

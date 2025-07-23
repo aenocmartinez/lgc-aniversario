@@ -14,6 +14,7 @@ type Container struct {
 	userRepo         domain.UserRepository
 	inscripcionRepo  domain.InscripcionRepository
 	estadisticasRepo domain.EstadisticasRepository
+	participanteRepo domain.ParticipanteRepository
 }
 
 var (
@@ -29,6 +30,7 @@ func GetContainer() *Container {
 			userRepo:         dao.NewUserDao(db),
 			inscripcionRepo:  dao.NewInscripcionDao(db),
 			estadisticasRepo: dao.NewEstadisticasDao(db),
+			participanteRepo: dao.NewParticipanteDao(db),
 		}
 	})
 	return instance
@@ -44,4 +46,8 @@ func (c *Container) GetInscripcionRepository() domain.InscripcionRepository {
 
 func (c *Container) GetEstadisticasRepository() domain.EstadisticasRepository {
 	return c.estadisticasRepo
+}
+
+func (c *Container) GetParticipanteRepository() domain.ParticipanteRepository {
+	return c.participanteRepo
 }

@@ -9,6 +9,8 @@ type EstadisticaEventoDTO struct {
 	CupoMaximoPresencial    int
 	CupoUtilizadoPresencial int
 	CupoRestantePresencial  int
+	TotalRecaudoCOP         float64 `json:"total_recaudo_cop"`
+	TotalRecaudoUSD         float64 `json:"total_recaudo_usd"`
 
 	TotalPorModalidad     map[string]int
 	TotalPorDiaAsistencia map[string]int
@@ -20,4 +22,5 @@ type EstadisticaEventoDTO struct {
 
 	TotalSinIglesia     int
 	InscripcionesPorDia []InscripcionesDiaDTO
+	RecaudoPorModalidad map[string]map[string]float64 `json:"recaudo_por_modalidad"`
 }
