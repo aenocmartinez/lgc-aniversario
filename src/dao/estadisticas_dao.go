@@ -147,7 +147,7 @@ func (i *EstadisticasDao) ObtenerResumenEstadisticasEvento(cupoMax int) dto.Esta
 func (i *EstadisticasDao) ObtenerReporteParaContador() []dto.ReporteContadorInscripcionDTO {
 	db := i.db
 
-	// 1. Obtener todas las inscripciones que no son gratuitas
+	// 1. Obtener inscripciones PreAprobadas que no son gratuitas
 	var inscripciones []struct {
 		ID             int
 		FormaPago      string
@@ -157,10 +157,10 @@ func (i *EstadisticasDao) ObtenerReporteParaContador() []dto.ReporteContadorInsc
 	}
 	db.Table("inscripciones").
 		Select("id, forma_pago, monto_pagado_cop, monto_pagado_usd, soporte_pago_url").
-		Where("forma_pago != ?", "gratuito").
+		Where("forma_pago != ? AND estado = ?", "gratuito", "PreAprobada").
 		Find(&inscripciones)
 
-	// 2. Obtener todos los participantes relacionados
+	// 2. Obtener participantes de esas inscripciones
 	var participantes []struct {
 		InscripcionID   int
 		NombreCompleto  string
@@ -169,7 +169,10 @@ func (i *EstadisticasDao) ObtenerReporteParaContador() []dto.ReporteContadorInsc
 	}
 	db.Table("participantes").
 		Select("inscripcion_id, nombre_completo, numero_documento, telefono").
-		Where("inscripcion_id IN (?)", db.Table("inscripciones").Select("id").Where("forma_pago != ?", "gratuito")).
+		Where("inscripcion_id IN (?)",
+			db.Table("inscripciones").
+				Select("id").
+				Where("forma_pago != ? AND estado = ?", "gratuito", "PreAprobada")).
 		Find(&participantes)
 
 	// 3. Agrupar participantes por inscripción

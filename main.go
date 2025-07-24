@@ -46,8 +46,8 @@ func main() {
 		inscripcionGroup := protected.Group("/inscripciones")
 		{
 			inscripcionGroup.GET("", controller.ListarInscripciones)
-			inscripcionGroup.PUT("/rechazar/:id", controller.RechazarInscripcion)
-			inscripcionGroup.PUT("/aprobar/:id", controller.AprobarInscripcion)
+			inscripcionGroup.PUT("/:id/rechazar", controller.RechazarInscripcion)
+			inscripcionGroup.PUT("/:id/aprobar", controller.AprobarInscripcion)
 		}
 
 		reportesGroup := protected.Group("/reportes")
