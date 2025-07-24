@@ -55,22 +55,32 @@ func (i *EstadisticasDao) ObtenerResumenEstadisticasEvento(cupoMax int) dto.Esta
 	}
 
 	// 4. Estado por forma de pago
-	var estadoPagoResults []struct {
+	type FormaPagoTotal struct {
 		FormaPago string
-		Estado    string
 		Total     int
 	}
-	db.Table("inscripciones").
-		Select("forma_pago, estado, COUNT(*) as total").
-		Group("forma_pago, estado").
-		Scan(&estadoPagoResults)
 
-	estadoPorFormaPago := map[string]map[string]int{}
-	for _, r := range estadoPagoResults {
-		if _, ok := estadoPorFormaPago[r.FormaPago]; !ok {
-			estadoPorFormaPago[r.FormaPago] = map[string]int{}
-		}
-		estadoPorFormaPago[r.FormaPago][r.Estado] = r.Total
+	var resultados []FormaPagoTotal
+
+	query := `
+	SELECT i.forma_pago, COUNT(*) AS total
+	FROM inscripciones i
+	INNER JOIN participantes p ON i.id = p.inscripcion_id
+	WHERE p.modalidad = ? AND p.dias_asistencia = ?
+	GROUP BY i.forma_pago
+
+	UNION
+
+	SELECT forma_pago, COUNT(*) AS total
+	FROM inscripciones
+	WHERE forma_pago = ?
+	GROUP BY forma_pago
+`
+
+	db.Raw(query, "presencial", "sabado", "gratuito").Scan(&resultados)
+	estadoPorFormaPago := map[string]int{}
+	for _, r := range resultados {
+		estadoPorFormaPago[r.FormaPago] = r.Total
 	}
 
 	// 5. Inscripciones por día

@@ -14,7 +14,7 @@ type EstadisticaEventoDTO struct {
 
 	TotalPorModalidad     map[string]int
 	TotalPorDiaAsistencia map[string]int
-	EstadoPorFormaPago    map[string]map[string]int
+	EstadoPorFormaPago    map[string]int
 	IngresosPorFormaPago  map[string]struct {
 		TotalCOP int
 		TotalUSD int
