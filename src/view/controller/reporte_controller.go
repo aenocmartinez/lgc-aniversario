@@ -23,7 +23,9 @@ func DescargarRelacionIngresosExcel(c *gin.Context) {
 		return
 	}
 
-	fileName := "reporte_ingresos_inscripciones_aniversario_" + time.Now().Format("2006-01-02_15-04-05") + ".xlsx"
+	loc, _ := time.LoadLocation("America/Bogota")
+	fechaBogota := time.Now().In(loc)
+	fileName := "reporte_ingresos_inscripciones_aniversario_" + fechaBogota.Format("2006-01-02_15-04-05") + ".xlsx"
 
 	c.Header("Content-Disposition", "attachment; filename="+fileName)
 	c.Data(http.StatusOK, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileBytes)
@@ -53,7 +55,10 @@ func DescargarReporteLogistica(c *gin.Context) {
 		return
 	}
 
-	fileName := "reporte_logistica_" + time.Now().Format("2006-01-02_15-04-05") + ".xlsx"
+	loc, _ := time.LoadLocation("America/Bogota")
+	fechaBogota := time.Now().In(loc)
+	fileName := "reporte_logistica_" + fechaBogota.Format("2006-01-02_15-04-05") + ".xlsx"
+
 	c.Header("Content-Disposition", "attachment; filename="+fileName)
 	c.Data(http.StatusOK, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", excelBytes)
 }

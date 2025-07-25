@@ -77,7 +77,7 @@ func (uc *RealizarInscripcionUseCase) Execute(req formrequest.InscripcionFormReq
 	inscripcion.SetMontoPagoCOP(req.MontoCOP)
 	inscripcion.SetMontoPagoUSD(req.MontoUSD)
 
-	if req.FormaPago == "efectivo" || req.FormaPago == "gratuito" {
+	if req.FormaPago == "gratuito" {
 		inscripcion.SetEstado("Aprobada")
 	} else {
 		inscripcion.SetEstado("PreAprobada")
