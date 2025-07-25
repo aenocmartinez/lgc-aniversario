@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dashboard Inscripciones</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&family=Lato&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --verde: #1b3c2a;
+      --naranja: #c16c4f;
+      --marron: #b3885f;
+      --fondo: #fdfaed;
+      --blanco: #ffffff;
+    }
+
+    body {
+      margin: 0;
+      padding: 20px 40px;
+      font-family: 'Lato', sans-serif;
+      background: var(--fondo);
+      color: var(--verde);
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 40px;
+      justify-content: center;
+    }
+
+    header img {
+      height: 70px;
+    }
+
+    header h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 2.2em;
+      margin: 0;
+    }
+
+    section {
+      margin-bottom: 80px;
+      padding-bottom: 30px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .section-title {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.6em;
+      margin-bottom: 25px;
+      text-align: center;
+      color: var(--verde);
+      position: relative;
+    }
+
+    .section-title::after {
+      content: '';
+      display: block;
+      width: 80px;
+      height: 4px;
+      background-color: var(--naranja);
+      margin: 10px auto 0;
+      border-radius: 2px;
+    }
+
+    .circle-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 30px;
+      justify-content: center;
+    }
+
+    .circle {
+      background: var(--blanco);
+      border-radius: 50%;
+      width: 180px;
+      height: 180px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+      text-align: center;
+      padding: 15px;
+      transition: transform 0.3s ease;
+    }
+
+    .circle:hover {
+      transform: scale(1.06);
+    }
+
+    .circle h2 {
+      font-size: 2.2em;
+      margin: 0;
+      color: var(--naranja);
+    }
+
+    .circle p {
+      font-size: 1em;
+      margin-top: 10px;
+      color: var(--verde);
+    }
+
+    .chart-wrapper {
+      max-width: 320px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    .chart-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 1.8em;
+      font-family: 'Poppins', sans-serif;
+      font-weight: bold;
+      color: var(--verde);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      font-size: 1.1em;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 14px 18px;
+      text-align: left;
+    }
+
+    th {
+      background: var(--verde);
+      color: var(--blanco);
+    }
+
+    .participante {
+      font-weight: bold;
+    }
+
+    #detalle-modalidad {
+      text-align: center;
+      font-size: 1.1em;
+      margin-top: 20px;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="assets/logo-lgc.png" alt="Logo LGC" />
+    <h1>Dashboard de Inscripciones</h1>
+  </header>
+
+  <section>
+    <div class="section-title">Consolidado General</div>
+    <div class="circle-group" id="grupo-general"></div>
+    <p id="detalle-modalidad"></p>
+  </section>
+
+  <section>
+    <div class="section-title">Avance hacia la Meta (400)</div>
+    <div class="chart-wrapper">
+      <canvas id="avanceChart"></canvas>
+      <div class="chart-text" id="avancePorcentaje">0%</div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-title">Cupos Presenciales Sábado</div>
+    <div class="circle-group" id="grupo-cupos"></div>
+  </section>
+
+  <!-- Nueva Sección de Recaudo Total -->
+  <section>
+    <div class="section-title">Recaudo Total</div>
+    <div class="circle-group" id="grupo-recaudo"></div>
+  </section>
+
+  <section>
+    <div class="section-title">Inscripciones por Forma de Pago</div>
+    <table id="tabla-pagos">
+      <thead><tr><th>Forma de Pago</th><th>Total</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <section>
+    <div class="section-title">Últimos Inscritos</div>
+    <table id="tabla-ultimos">
+      <thead><tr><th>Participante</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <script>
+    async function cargarDashboard() {
+      const [resResumen, resInscripciones] = await Promise.all([
+        fetch('http://localhost:8587/estadisticas/resumen'),
+        fetch('http://localhost:8587/estadisticas/inscripciones')
+      ]);
+
+      const { data } = await resResumen.json();
+      const { data: inscripciones } = await resInscripciones.json();
+
+      const sabado = data.TotalPorDiaAsistencia.sabado || 0;
+      const viernesDomingo = data.TotalPorDiaAsistencia.viernes_y_domingo || 0;
+      const total = sabado + viernesDomingo;
+
+      const grupoGeneral = document.getElementById('grupo-general');
+      [['Total inscritos', total], ['Sábado', sabado], ['Viernes y Domingo', viernesDomingo]].forEach(([label, value]) => {
+        grupoGeneral.innerHTML += `<div class="circle"><h2>${value}</h2><p>${label}</p></div>`;
+      });
+
+      // ➕ Detalle SOLO del sábado
+      const sabadoPresencial = data.CupoUtilizadoPresencial || 0;
+      const sabadoVirtual = sabado - sabadoPresencial;
+
+      document.getElementById('detalle-modalidad').textContent =
+        `De los ${sabado} inscritos para el día sábado, ${sabadoPresencial} son presenciales y ${sabadoVirtual} son virtuales.`;
+
+      // 🎯 Avance hacia la meta solo con sabado presenciales
+      const porcentaje = Math.min((sabadoPresencial / 400) * 100, 100).toFixed(1);
+      document.getElementById('avancePorcentaje').textContent = `${porcentaje}%`;
+
+      new Chart(document.getElementById('avanceChart'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Avance', 'Restante'],
+          datasets: [{
+            data: [sabadoPresencial, 400 - sabadoPresencial],
+            backgroundColor: ['#c16c4f', '#eee'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          cutout: '75%',
+          plugins: { legend: { display: false } }
+        }
+      });
+
+      const grupoCupos = document.getElementById('grupo-cupos');
+      const cupoMax = 400;
+      const restante = cupoMax - sabadoPresencial;
+      [['Cupo Máximo', cupoMax], ['Utilizado', sabadoPresencial], ['Disponible', restante]].forEach(([label, value]) => {
+        grupoCupos.innerHTML += `<div class="circle"><h2>${value}</h2><p>${label}</p></div>`;
+      });
+
+      const tbodyPago = document.querySelector('#tabla-pagos tbody');
+      Object.entries(data.EstadoPorFormaPago).forEach(([forma, total]) => {
+        tbodyPago.innerHTML += `<tr><td>${forma}</td><td>${total}</td></tr>`;
+      });
+
+      const tbodyUltimos = document.querySelector('#tabla-ultimos tbody');
+      inscripciones
+        .sort((a, b) => new Date(b.fecha_creacion) - new Date(a.fecha_creacion))
+        .slice(0, 5)
+        .forEach(item => {
+          const p = item.participantes[0] || {};
+          const fecha = new Date(item.fecha_creacion).toLocaleDateString('es-CO');
+          tbodyUltimos.innerHTML += `<tr><td><span class="participante">${p.nombre || 'N/A'}</span><br>${p.documento || ''} • ${p.email || ''}<br>${p.telefono || ''} • ${p.modalidad || ''}<br>${p.iglesia || ''} • ${p.ciudad || ''}<br>${fecha}</td></tr>`;
+        });
+
+
+        // Recaudo
+        const grupoRecaudo = document.getElementById('grupo-recaudo');
+
+        const totalCOP = data.total_recaudo_cop || 0;
+        const totalUSD = data.total_recaudo_usd || 0;
+
+        const formatoCOP = totalCOP.toLocaleString('es-CO', {
+          style: 'currency',
+          currency: 'COP',
+          minimumFractionDigits: 0
+        });
+        const formatoUSD = totalUSD.toLocaleString('en-US', {
+          style: 'currency',
+          currency: 'USD',
+          minimumFractionDigits: 2
+        });
+
+        [['COP', formatoCOP], ['USD', formatoUSD]].forEach(([label, value]) => {
+          grupoRecaudo.innerHTML += `
+            <div class="circle">
+              <h2>${value}</h2>
+              <p>Recaudo en ${label}</p>
+            </div>
+          `;
+        });
+
+
+    }
+
+    cargarDashboard();
+
+  // Refrescar cada 5 minutos (300,000 ms)
+  setInterval(() => {
+    // Limpiar contenido anterior antes de volver a cargar
+    document.getElementById('grupo-general').innerHTML = '';
+    document.getElementById('detalle-modalidad').textContent = '';
+    document.getElementById('grupo-cupos').innerHTML = '';
+    document.getElementById('grupo-recaudo').innerHTML = '';
+    document.querySelector('#tabla-pagos tbody').innerHTML = '';
+    document.querySelector('#tabla-ultimos tbody').innerHTML = '';
+    document.getElementById('avancePorcentaje').textContent = '0%';
+    const chartCanvas = document.getElementById('avanceChart');
+    chartCanvas.getContext('2d').clearRect(0, 0, chartCanvas.width, chartCanvas.height);
+
+    // Recargar datos
+    cargarDashboard();
+  }, 300000); // 300000 ms = 5 minutos
+
+  </script>
+</body>
+</html>

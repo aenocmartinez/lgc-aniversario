@@ -3,6 +3,7 @@ package main
 import (
 	"lgc/src/infraestructure/middleware"
 	"lgc/src/view/controller"
+	"net/http"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -23,6 +24,12 @@ func main() {
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}))
+
+	r.Static("/assets", "./html/assets")
+	r.LoadHTMLGlob("html/*.html")
+	r.GET("/dashboard", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "dashboard.html", gin.H{})
+	})
 
 	// Login
 	r.POST("/login", controller.Login)
