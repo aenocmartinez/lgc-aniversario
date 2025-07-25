@@ -9,7 +9,7 @@ services:
     volumes:
       - .:/app
     ports:
-      - 8587:8587
+      - 8586:8586
     restart: always
     env_file:
       - ${HOME}/environments/lgc-aniversario-env/.env
