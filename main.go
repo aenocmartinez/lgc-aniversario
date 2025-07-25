@@ -67,6 +67,11 @@ func main() {
 			reportesGroup.GET("/relacion-ingresos/excel", controller.DescargarRelacionIngresosExcel)
 			reportesGroup.GET("/logistica", controller.DescargarReporteLogistica)
 		}
+
+		usuariosGruop := protected.Group("/usuarios")
+		{
+			usuariosGruop.POST("", controller.CrearUsuario)
+		}
 	}
 
 	r.Run(":8586")
