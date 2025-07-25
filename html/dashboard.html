@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Dashboard Inscripciones</title>
+  <link rel="icon" type="image/png" href="assets/favicon.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&family=Lato&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -177,32 +178,28 @@
   </section>
 
   <!-- Nueva Sección de Recaudo Total -->
-  <section>
-    <div class="section-title">Recaudo Total</div>
-    <div class="circle-group" id="grupo-recaudo"></div>
-  </section>
 
-  <section>
+  <!-- <section>
     <div class="section-title">Inscripciones por Forma de Pago</div>
     <table id="tabla-pagos">
       <thead><tr><th>Forma de Pago</th><th>Total</th></tr></thead>
       <tbody></tbody>
     </table>
-  </section>
+  </section> -->
 
-  <section>
+  <!-- <section>
     <div class="section-title">Últimos Inscritos</div>
     <table id="tabla-ultimos">
       <thead><tr><th>Participante</th></tr></thead>
       <tbody></tbody>
     </table>
-  </section>
+  </section> -->
 
   <script>
     async function cargarDashboard() {
       const [resResumen, resInscripciones] = await Promise.all([
-        fetch('http://localhost:8587/estadisticas/resumen'),
-        fetch('http://localhost:8587/estadisticas/inscripciones')
+        fetch('https://dockerapps.pulzo.com/lgc-aniversario/estadisticas/resumen'),
+        fetch('https://dockerapps.pulzo.com/lgc-aniversario/estadisticas/inscripciones')
       ]);
 
       const { data } = await resResumen.json();
@@ -251,69 +248,41 @@
         grupoCupos.innerHTML += `<div class="circle"><h2>${value}</h2><p>${label}</p></div>`;
       });
 
-      const tbodyPago = document.querySelector('#tabla-pagos tbody');
-      Object.entries(data.EstadoPorFormaPago).forEach(([forma, total]) => {
-        tbodyPago.innerHTML += `<tr><td>${forma}</td><td>${total}</td></tr>`;
-      });
+      // const tbodyPago = document.querySelector('#tabla-pagos tbody');
+      // Object.entries(data.EstadoPorFormaPago).forEach(([forma, total]) => {
+      //   tbodyPago.innerHTML += `<tr><td>${forma}</td><td>${total}</td></tr>`;
+      // });
 
-      const tbodyUltimos = document.querySelector('#tabla-ultimos tbody');
-      inscripciones
-        .sort((a, b) => new Date(b.fecha_creacion) - new Date(a.fecha_creacion))
-        .slice(0, 5)
-        .forEach(item => {
-          const p = item.participantes[0] || {};
-          const fecha = new Date(item.fecha_creacion).toLocaleDateString('es-CO');
-          tbodyUltimos.innerHTML += `<tr><td><span class="participante">${p.nombre || 'N/A'}</span><br>${p.documento || ''} • ${p.email || ''}<br>${p.telefono || ''} • ${p.modalidad || ''}<br>${p.iglesia || ''} • ${p.ciudad || ''}<br>${fecha}</td></tr>`;
-        });
-
-
-        // Recaudo
-        const grupoRecaudo = document.getElementById('grupo-recaudo');
-
-        const totalCOP = data.total_recaudo_cop || 0;
-        const totalUSD = data.total_recaudo_usd || 0;
-
-        const formatoCOP = totalCOP.toLocaleString('es-CO', {
-          style: 'currency',
-          currency: 'COP',
-          minimumFractionDigits: 0
-        });
-        const formatoUSD = totalUSD.toLocaleString('en-US', {
-          style: 'currency',
-          currency: 'USD',
-          minimumFractionDigits: 2
-        });
-
-        [['COP', formatoCOP], ['USD', formatoUSD]].forEach(([label, value]) => {
-          grupoRecaudo.innerHTML += `
-            <div class="circle">
-              <h2>${value}</h2>
-              <p>Recaudo en ${label}</p>
-            </div>
-          `;
-        });
+      // const tbodyUltimos = document.querySelector('#tabla-ultimos tbody');
+      // inscripciones
+      //   .sort((a, b) => new Date(b.fecha_creacion) - new Date(a.fecha_creacion))
+      //   .slice(0, 5)
+      //   .forEach(item => {
+      //     const p = item.participantes[0] || {};
+      //     const fecha = new Date(item.fecha_creacion).toLocaleDateString('es-CO');
+      //     tbodyUltimos.innerHTML += `<tr><td><span class="participante">${p.nombre || 'N/A'}</span><br>${p.documento || ''} • ${p.email || ''}<br>${p.telefono || ''} • ${p.modalidad || ''}<br>${p.iglesia || ''} • ${p.ciudad || ''}<br>${fecha}</td></tr>`;
+      //   });
 
 
     }
 
     cargarDashboard();
 
-  // Refrescar cada 5 minutos (300,000 ms)
-  setInterval(() => {
-    // Limpiar contenido anterior antes de volver a cargar
-    document.getElementById('grupo-general').innerHTML = '';
-    document.getElementById('detalle-modalidad').textContent = '';
-    document.getElementById('grupo-cupos').innerHTML = '';
-    document.getElementById('grupo-recaudo').innerHTML = '';
-    document.querySelector('#tabla-pagos tbody').innerHTML = '';
-    document.querySelector('#tabla-ultimos tbody').innerHTML = '';
-    document.getElementById('avancePorcentaje').textContent = '0%';
-    const chartCanvas = document.getElementById('avanceChart');
-    chartCanvas.getContext('2d').clearRect(0, 0, chartCanvas.width, chartCanvas.height);
+    setInterval(() => {
+      console.log("🔄 Dashboard actualizado a las", new Date().toLocaleTimeString());
 
-    // Recargar datos
-    cargarDashboard();
-  }, 300000); // 300000 ms = 5 minutos
+      document.getElementById('grupo-general').innerHTML = '';
+      document.getElementById('detalle-modalidad').textContent = '';
+      document.getElementById('grupo-cupos').innerHTML = '';
+      document.getElementById('grupo-recaudo').innerHTML = '';
+      // document.querySelector('#tabla-pagos tbody').innerHTML = '';
+      // document.querySelector('#tabla-ultimos tbody').innerHTML = '';
+      document.getElementById('avancePorcentaje').textContent = '0%';
+      const chartCanvas = document.getElementById('avanceChart');
+      chartCanvas.getContext('2d').clearRect(0, 0, chartCanvas.width, chartCanvas.height);
+
+      cargarDashboard();
+    }, 3000000); // 5 minutos
 
   </script>
 </body>

@@ -31,6 +31,10 @@ func main() {
 		c.HTML(http.StatusOK, "dashboard.html", gin.H{})
 	})
 
+	r.GET("/dashboard-full", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "dashboard_full.html", gin.H{})
+	})
+
 	// Login
 	r.POST("/login", controller.Login)
 

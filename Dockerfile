@@ -21,7 +21,12 @@ WORKDIR /app
 
 # Copiar el binario compilado
 COPY --from=builder /app/main .
+
+# ✅ Copiar la carpeta html
+COPY --from=builder /app/html /app/html
+
 RUN chmod +x /app/main
+
 
 # Comando de ejecución
 CMD ["/app/main"]

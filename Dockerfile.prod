@@ -8,4 +8,8 @@ WORKDIR /app
 RUN apk --no-cache add ca-certificates
 RUN apk --no-cache add tzdata
 COPY --from=builder /app/main .
+
+# ✅ Copiar la carpeta html
+COPY --from=builder /app/html /app/html
+
 CMD ["/app/main"]
