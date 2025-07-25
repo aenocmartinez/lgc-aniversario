@@ -71,6 +71,7 @@ func main() {
 		usuariosGruop := protected.Group("/usuarios")
 		{
 			usuariosGruop.POST("", controller.CrearUsuario)
+			usuariosGruop.PUT("", controller.ActualizarUsuario)
 		}
 	}
 

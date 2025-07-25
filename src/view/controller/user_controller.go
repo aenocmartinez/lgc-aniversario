@@ -23,3 +23,18 @@ func CrearUsuario(c *gin.Context) {
 
 	c.JSON(response.StatusCode, response)
 }
+
+func ActualizarUsuario(c *gin.Context) {
+
+	var req formrequest.ActualizarUsuarioFormRequest
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	actualizarUusario := usecase.NewActualizarUsuarioUseCase(di.GetContainer().GetUserRepository())
+	response := actualizarUusario.Executar(req)
+
+	c.JSON(response.StatusCode, response)
+}
