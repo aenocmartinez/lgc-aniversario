@@ -38,7 +38,7 @@ func correoSabadoPresencial(nombre string) string {
 			<li>Ponencias</li>
 			<li>Panel con sesión de preguntas y respuestas</li>
 			<li>Merienda</li>
-			<li>Almuerzo</li>
+			<li>Almuerzo tipo lunch</li>
 			<li>Obsequio especial</li>
 		</ul>
 
