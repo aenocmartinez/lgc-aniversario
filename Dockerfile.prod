@@ -11,5 +11,6 @@ COPY --from=builder /app/main .
 
 # ✅ Copiar la carpeta html
 COPY --from=builder /app/html /app/html
+COPY ./resources /app/resources
 
 CMD ["/app/main"]

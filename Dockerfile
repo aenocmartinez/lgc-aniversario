@@ -19,11 +19,16 @@ FROM debian:bullseye-slim
 
 WORKDIR /app
 
+# ✅ Instalar certificados TLS
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && rm -rf /var/lib/apt/lists/*
+
 # Copiar el binario compilado
 COPY --from=builder /app/main .
 
 # ✅ Copiar la carpeta html
 COPY --from=builder /app/html /app/html
+
+COPY ./resources /app/resources
 
 RUN chmod +x /app/main
 

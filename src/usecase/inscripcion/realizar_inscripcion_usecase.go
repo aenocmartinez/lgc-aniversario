@@ -3,7 +3,9 @@ package usecase
 import (
 	"fmt"
 	"lgc/src/domain"
+	"lgc/src/infraestructure/email"
 	"lgc/src/infraestructure/util"
+	usecase "lgc/src/usecase/emails"
 	"lgc/src/view/dto"
 	formrequest "lgc/src/view/form-request"
 	"log"
@@ -96,6 +98,10 @@ func (uc *RealizarInscripcionUseCase) Execute(req formrequest.InscripcionFormReq
 		}
 		return dto.NewAPIResponse(500, "Ocurrió un error al registrar la inscripción. Intente nuevamente.", nil)
 	}
+
+	// Enviando correo
+	sendEmail := usecase.NewSendEmailUseCase(email.NewEmailService(email.GetEmailConfig()))
+	go sendEmail.Execute(inscripcion)
 
 	return dto.NewAPIResponse(201, "La inscripción ha sido registrada exitosamente. Agradecemos su participación en el evento.", nil)
 }
