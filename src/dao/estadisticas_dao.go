@@ -72,6 +72,30 @@ func (i *EstadisticasDao) ObtenerResumenEstadisticasEvento(cupoMax int) dto.Esta
 		resultado.PorcentajeAvanceMeta = (float64(resultado.TotalPresencialesSabado) / float64(cupoMaximoSabado)) * 100
 	}
 
+	var totalCOP, presencialCOP int64
+	var virtualUSD float64
+
+	// Total COP (todos los que pagaron en COP y no están Rechazados)
+	db.Table("inscripciones").
+		Where("estado <> ? AND forma_pago != ?", "Rechazada", "gratuito").
+		Select("SUM(monto_pagado_cop)").Scan(&totalCOP)
+
+	// Recaudo presencial COP (solo presencial)
+	db.Table("inscripciones").
+		Where("estado <> ?", "Rechazada").
+		Select("SUM(monto_pagado_cop)").
+		Scan(&presencialCOP)
+
+	// Recaudo virtual USD (solo virtual)
+	db.Table("inscripciones").
+		Where("estado <> ?", "Rechazada").
+		Select("SUM(monto_pagado_usd)").
+		Scan(&virtualUSD)
+
+	resultado.TotalRecaudo = int(totalCOP)
+	resultado.RecaudoPresencial = int(presencialCOP)
+	resultado.RecaudoVirtual = virtualUSD
+
 	return resultado
 }
 
