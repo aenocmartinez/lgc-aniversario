@@ -186,8 +186,8 @@
   <script>
   async function cargarDashboard() {
     const [resResumen, resInscripciones] = await Promise.all([
-      fetch('http://localhost:8586/estadisticas/resumen'),
-      fetch('http://localhost:8586/estadisticas/inscripciones')
+      fetch('https://dockerapps.pulzo.com/lgc-aniversario/estadisticas/resumen'),
+      fetch('https://dockerapps.pulzo.com/lgc-aniversario/estadisticas/inscripciones')
     ]);
 
     const { data } = await resResumen.json();
