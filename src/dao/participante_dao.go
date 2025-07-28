@@ -18,9 +18,11 @@ func NewParticipanteDao(db *gorm.DB) *ParticipanteDao {
 func (r *ParticipanteDao) ObtenerParticipantesParaLogistica() []dto.ReporteLogisticaDTO {
 	var results []dto.ReporteLogisticaDTO
 
-	r.db.Table("participantes").
-		Select("nombre_completo, numero_documento, correo_electronico, dias_asistencia, telefono").
-		Where("modalidad = ?", "presencial").
+	r.db.Table("inscripciones AS i").
+		Select("p.nombre_completo, p.numero_documento, p.correo_electronico, p.dias_asistencia, p.telefono").
+		Joins("INNER JOIN participantes p ON i.id = p.inscripcion_id").
+		Where("i.estado <> ?", "Rechazada").
+		Where("p.modalidad <> ?", "Virtual").
 		Scan(&results)
 
 	for i := range results {

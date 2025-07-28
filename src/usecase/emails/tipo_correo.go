@@ -43,6 +43,10 @@ func correoSabadoPresencial(nombre string) string {
 		</ul>
 
 		<p style="font-family: Arial, sans-serif; font-size: 14px; color: #333;">
+			El comprobante de pago será verificado por el equipo organizador. En caso de presentarse alguna novedad con la información registrada o el soporte cargado, nos pondremos en contacto con usted a través de los datos suministrados.
+		</p>
+
+		<p style="font-family: Arial, sans-serif; font-size: 14px; color: #333;">
 			Para mantenerse informado(a) sobre actualizaciones y detalles logísticos del evento, le invitamos a unirse al grupo oficial de WhatsApp a través del siguiente enlace:<br>
 			<a href="https://chat.whatsapp.com/KjwFoapjkUY73hL8abjJ4X" style="color: #00349a;">Unirse al grupo de WhatsApp</a>
 		</p>
@@ -66,7 +70,7 @@ func correoSabadoPresencial(nombre string) string {
 
 		<p style="font-family: Arial, sans-serif; font-size: 14px; color: #00349a;">
 			Atentamente,<br>
-			Iglesia La Gran Comisión – CCI</strong>
+			Iglesia La Gran Comisión – CCI
 		</p>
 	`, nombre)
 }
@@ -84,6 +88,10 @@ func correoSabadoVirtual(nombre string) string {
 		<p style="font-family: Arial, sans-serif; font-size: 14px; color: #333;">
 			<strong>Modalidad de inscripción:</strong> Virtual<br>
 			<strong>Día de asistencia:</strong> Sábado
+		</p>
+
+		<p style="font-family: Arial, sans-serif; font-size: 14px; color: #333;">
+			El comprobante de pago será verificado por el equipo organizador. En caso de presentarse alguna novedad con la información registrada o el soporte cargado, nos pondremos en contacto con usted a través de los datos suministrados.
 		</p>
 
 		<p style="font-family: Arial, sans-serif; font-size: 14px; color: #333;">
@@ -110,7 +118,7 @@ func correoSabadoVirtual(nombre string) string {
 
 		<p style="font-family: Arial, sans-serif; font-size: 14px; color: #00349a;">
 			Atentamente,<br>
-			Iglesia La Gran Comisión – CCI</strong>
+			Iglesia La Gran Comisión – CCI
 		</p>
 	`, nombre)
 }

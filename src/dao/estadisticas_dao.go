@@ -15,133 +15,64 @@ func NewEstadisticasDao(db *gorm.DB) *EstadisticasDao {
 }
 
 func (i *EstadisticasDao) ObtenerResumenEstadisticasEvento(cupoMax int) dto.EstadisticaEventoDTO {
+	var cupoMaximoSabado int = cupoMax
 	db := i.db
+	var resultado dto.EstadisticaEventoDTO
+	resultado.CupoMaximoPresencialSabado = cupoMaximoSabado
 
-	// 1. Cupo presencial ocupado
-	var totalPresenciales int64
-	db.Table("participantes").
-		Where("modalidad = ? AND dias_asistencia = ? AND inscripcion_id IN (SELECT id FROM inscripciones WHERE estado != ?)",
-			"presencial", "sabado", "Rechazada").
-		Count(&totalPresenciales)
+	// Variables auxiliares para Count
+	var totalInscritos int64
+	var totalSabado int64
+	var totalViernes int64
+	var totalPresencialesSabado int64
+	var totalVirtualesSabado int64
 
-	// 2. Total por modalidad
-	var modalidadResults []struct {
-		Modalidad string
-		Total     int
-	}
-	db.Table("participantes").
-		Select("modalidad, COUNT(*) as total").
-		Group("modalidad").
-		Scan(&modalidadResults)
-
-	totalPorModalidad := map[string]int{}
-	for _, r := range modalidadResults {
-		totalPorModalidad[r.Modalidad] = r.Total
-	}
-
-	// 3. Total por días de asistencia
-	var diasAsistenciaResults []struct {
-		Dia   string
-		Total int
-	}
-	db.Table("participantes").
-		Select("dias_asistencia as dia, COUNT(*) as total").
-		Group("dias_asistencia").
-		Scan(&diasAsistenciaResults)
-
-	totalPorDiaAsistencia := map[string]int{}
-	for _, r := range diasAsistenciaResults {
-		totalPorDiaAsistencia[r.Dia] = r.Total
-	}
-
-	// 4. Estado por forma de pago
-	type FormaPagoTotal struct {
-		FormaPago string
-		Total     int
-	}
-
-	var resultados []FormaPagoTotal
-
-	query := `
-	SELECT i.forma_pago, COUNT(*) AS total
-	FROM inscripciones i
-	INNER JOIN participantes p ON i.id = p.inscripcion_id
-	WHERE p.modalidad = ? AND p.dias_asistencia = ?
-	GROUP BY i.forma_pago
-
-	UNION
-
-	SELECT forma_pago, COUNT(*) AS total
-	FROM inscripciones
-	WHERE forma_pago = ?
-	GROUP BY forma_pago
-`
-
-	db.Raw(query, "presencial", "sabado", "gratuito").Scan(&resultados)
-	estadoPorFormaPago := map[string]int{}
-	for _, r := range resultados {
-		estadoPorFormaPago[r.FormaPago] = r.Total
-	}
-
-	// 5. Inscripciones por día
-	var inscripcionesPorDia []dto.InscripcionesDiaDTO
-	db.Table("inscripciones").
-		Select("DATE(created_at) as fecha, COUNT(*) as total").
-		Group("DATE(created_at)").
-		Order("fecha").
-		Scan(&inscripcionesPorDia)
-
-	// 6. Participantes sin iglesia
-	var totalSinIglesia int64
-	db.Table("participantes").
-		Where("TRIM(iglesia) = 'No asiste a una iglesia'").
-		Count(&totalSinIglesia)
-
-	// 7. Total Recaudo COP y USD (solo inscripciones aprobadas o preaprobadas)
-	var totalCOP, totalUSD float64
-	db.Table("inscripciones").
-		Select("SUM(monto_pagado_cop), SUM(monto_pagado_usd)").
-		Where("estado IN ?", []string{"Aprobada", "PreAprobada"}).
-		Row().
-		Scan(&totalCOP, &totalUSD)
-
-	// 8. Recaudo por modalidad
-	type RecaudoPorModalidad struct {
-		Modalidad string
-		TotalCOP  float64
-		TotalUSD  float64
-	}
-
-	var recaudos []RecaudoPorModalidad
-
+	// 1. Total de inscritos (excluyendo Rechazada)
 	db.Table("participantes AS p").
-		Select("p.modalidad, SUM(i.monto_pagado_cop) AS total_cop, SUM(i.monto_pagado_usd) AS total_usd").
 		Joins("JOIN inscripciones i ON i.id = p.inscripcion_id").
-		Where("i.estado IN ?", []string{"Aprobada", "PreAprobada"}).
-		Group("p.modalidad").
-		Scan(&recaudos)
+		Where("i.estado <> ?", "Rechazada").
+		Count(&totalInscritos)
 
-	recaudoPorModalidad := map[string]map[string]float64{}
-	for _, r := range recaudos {
-		recaudoPorModalidad[r.Modalidad] = map[string]float64{
-			"cop": r.TotalCOP,
-			"usd": r.TotalUSD,
-		}
+	// 2. Total inscritos sábado
+	db.Table("participantes AS p").
+		Joins("JOIN inscripciones i ON i.id = p.inscripcion_id").
+		Where("p.dias_asistencia = ? AND i.estado <> ?", "sabado", "Rechazada").
+		Count(&totalSabado)
+
+	// 3. Total inscritos viernes_y_domingo
+	db.Table("participantes AS p").
+		Joins("JOIN inscripciones i ON i.id = p.inscripcion_id").
+		Where("p.dias_asistencia = ? AND i.estado <> ?", "viernes_y_domingo", "Rechazada").
+		Count(&totalViernes)
+
+	// 4. Total PRESENCIALES sábado
+	db.Table("participantes AS p").
+		Joins("JOIN inscripciones i ON i.id = p.inscripcion_id").
+		Where("p.dias_asistencia = ? AND p.modalidad = ? AND i.estado <> ?", "sabado", "presencial", "Rechazada").
+		Count(&totalPresencialesSabado)
+
+	// 5. Total VIRTUALES sábado
+	db.Table("participantes AS p").
+		Joins("JOIN inscripciones i ON i.id = p.inscripcion_id").
+		Where("p.dias_asistencia = ? AND p.modalidad = ? AND i.estado <> ?", "sabado", "virtual", "Rechazada").
+		Count(&totalVirtualesSabado)
+
+	// Asignar al DTO (de int64 a int)
+	resultado.TotalInscritos = int(totalInscritos)
+	resultado.TotalInscritosSabado = int(totalSabado)
+	resultado.TotalInscritosViernes = int(totalViernes)
+	resultado.TotalPresencialesSabado = int(totalPresencialesSabado)
+	resultado.TotalVirtualesSabado = int(totalVirtualesSabado)
+
+	// 6. Cupo restante
+	resultado.CupoRestanteSabado = cupoMaximoSabado - resultado.TotalPresencialesSabado
+
+	// 7. Porcentaje de avance a la meta
+	if cupoMaximoSabado > 0 {
+		resultado.PorcentajeAvanceMeta = (float64(resultado.TotalPresencialesSabado) / float64(cupoMaximoSabado)) * 100
 	}
 
-	return dto.EstadisticaEventoDTO{
-		CupoMaximoPresencial:    cupoMax,
-		CupoUtilizadoPresencial: int(totalPresenciales),
-		CupoRestantePresencial:  cupoMax - int(totalPresenciales),
-		TotalPorModalidad:       totalPorModalidad,
-		TotalPorDiaAsistencia:   totalPorDiaAsistencia,
-		EstadoPorFormaPago:      estadoPorFormaPago,
-		TotalSinIglesia:         int(totalSinIglesia),
-		InscripcionesPorDia:     inscripcionesPorDia,
-		TotalRecaudoCOP:         totalCOP,
-		TotalRecaudoUSD:         totalUSD,
-		RecaudoPorModalidad:     recaudoPorModalidad,
-	}
+	return resultado
 }
 
 func (i *EstadisticasDao) ObtenerReporteParaContador() []dto.ReporteContadorInscripcionDTO {

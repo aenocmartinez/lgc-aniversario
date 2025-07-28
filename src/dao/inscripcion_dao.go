@@ -146,11 +146,13 @@ func (i *InscripcionDao) ListarConParticipantes() []dto.InscripcionConParticipan
 	var inscripciones []inscripcionModel
 	var resultado []dto.InscripcionConParticipantesDTO
 
-	// Obtener todas las inscripciones ordenadas por ID descendente
-	i.db.Order("id desc").Find(&inscripciones)
+	// ✅ Excluir inscripciones rechazadas
+	i.db.
+		Where("estado != ?", "Rechazada").
+		Order("id desc").
+		Find(&inscripciones)
 
 	for _, ins := range inscripciones {
-		// Obtener los participantes asociados a esta inscripción
 		rows, err := i.db.Raw(`
 			SELECT nombre_completo, numero_documento, correo_electronico,
 			       telefono, modalidad, dias_asistencia, iglesia, ciudad, autorizacion_datos
@@ -159,7 +161,6 @@ func (i *InscripcionDao) ListarConParticipantes() []dto.InscripcionConParticipan
 		if err != nil {
 			continue
 		}
-
 		defer rows.Close()
 
 		var participantes []dto.ParticipanteDTO

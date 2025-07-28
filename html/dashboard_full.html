@@ -219,8 +219,8 @@
       });
 
       // ➕ Detalle SOLO del sábado
-      const sabadoPresencial = data.CupoUtilizadoPresencial || 0;
-      const sabadoVirtual = sabado - sabadoPresencial;
+      const sabadoPresencial = data.TotalPorDiaYModalidad?.sabado?.presencial || 0;
+      const sabadoVirtual = data.TotalPorDiaYModalidad?.sabado?.virtual || 0;
 
       document.getElementById('detalle-modalidad').textContent =
         `De los ${sabado} inscritos para el día sábado, ${sabadoPresencial} son presenciales y ${sabadoVirtual} son virtuales.`;

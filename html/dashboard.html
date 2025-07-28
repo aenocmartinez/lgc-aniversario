@@ -196,94 +196,77 @@
   </section> -->
 
   <script>
-    async function cargarDashboard() {
-      const [resResumen, resInscripciones] = await Promise.all([
-        fetch('https://dockerapps.pulzo.com/lgc-aniversario/estadisticas/resumen'),
-        fetch('https://dockerapps.pulzo.com/lgc-aniversario/estadisticas/inscripciones')
-      ]);
+  async function cargarDashboard() {
+    const [resResumen, resInscripciones] = await Promise.all([
+      fetch('https://dockerapps.pulzo.com/lgc-aniversario/estadisticas/resumen'),
+      fetch('https://dockerapps.pulzo.com/lgc-aniversario/estadisticas/inscripciones')
+    ]);
 
-      const { data } = await resResumen.json();
-      const { data: inscripciones } = await resInscripciones.json();
+    const { data } = await resResumen.json();
+    const { data: inscripciones } = await resInscripciones.json();
 
-      const sabado = data.TotalPorDiaAsistencia.sabado || 0;
-      const viernesDomingo = data.TotalPorDiaAsistencia.viernes_y_domingo || 0;
-      const total = sabado + viernesDomingo;
+    const total = data.TotalInscritos || 0;
+    const sabado = data.TotalInscritosSabado || 0;
+    const viernesDomingo = data.TotalInscritosViernes || 0;
+    const sabadoPresencial = data.TotalPresencialesSabado || 0;
+    const sabadoVirtual = data.TotalVirtualesSabado || 0;
+    const cupoMax = data.CupoMaximoPresencialSabado || 400;
+    const restante = data.CupoRestanteSabado || 0;
+    const porcentaje = (data.PorcentajeAvanceMeta || 0).toFixed(1);
 
-      const grupoGeneral = document.getElementById('grupo-general');
-      [['Total inscritos', total], ['Sábado', sabado], ['Viernes y Domingo', viernesDomingo]].forEach(([label, value]) => {
-        grupoGeneral.innerHTML += `<div class="circle"><h2>${value}</h2><p>${label}</p></div>`;
-      });
+    // 🔵 Sección Consolidado General
+    const grupoGeneral = document.getElementById('grupo-general');
+    [['Total inscritos', total], ['Sábado', sabado], ['Viernes y Domingo', viernesDomingo]].forEach(([label, value]) => {
+      grupoGeneral.innerHTML += `<div class="circle"><h2>${value}</h2><p>${label}</p></div>`;
+    });
 
-      // ➕ Detalle SOLO del sábado
-      const sabadoPresencial = data.CupoUtilizadoPresencial || 0;
-      const sabadoVirtual = sabado - sabadoPresencial;
+    // 🟠 Detalle modalidad sábado
+    document.getElementById('detalle-modalidad').textContent =
+      `De los ${sabado} inscritos para el día sábado, ${sabadoPresencial} son presenciales y ${sabadoVirtual} son virtuales.`;
 
-      document.getElementById('detalle-modalidad').textContent =
-        `De los ${sabado} inscritos para el día sábado, ${sabadoPresencial} son presenciales y ${sabadoVirtual} son virtuales.`;
+    // 🟢 Avance hacia la meta
+    document.getElementById('avancePorcentaje').textContent = `${porcentaje}%`;
 
-      // 🎯 Avance hacia la meta solo con sabado presenciales
-      const porcentaje = Math.min((sabadoPresencial / 400) * 100, 100).toFixed(1);
-      document.getElementById('avancePorcentaje').textContent = `${porcentaje}%`;
+    new Chart(document.getElementById('avanceChart'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Avance', 'Restante'],
+        datasets: [{
+          data: [sabadoPresencial, cupoMax - sabadoPresencial],
+          backgroundColor: ['#c16c4f', '#eee'],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        cutout: '75%',
+        plugins: { legend: { display: false } }
+      }
+    });
 
-      new Chart(document.getElementById('avanceChart'), {
-        type: 'doughnut',
-        data: {
-          labels: ['Avance', 'Restante'],
-          datasets: [{
-            data: [sabadoPresencial, 400 - sabadoPresencial],
-            backgroundColor: ['#c16c4f', '#eee'],
-            borderWidth: 0
-          }]
-        },
-        options: {
-          cutout: '75%',
-          plugins: { legend: { display: false } }
-        }
-      });
+    // 🟤 Cupos presenciales sábado
+    const grupoCupos = document.getElementById('grupo-cupos');
+    [['Cupo Máximo', cupoMax], ['Utilizado', sabadoPresencial], ['Disponible', restante]].forEach(([label, value]) => {
+      grupoCupos.innerHTML += `<div class="circle"><h2>${value}</h2><p>${label}</p></div>`;
+    });
+  }
 
-      const grupoCupos = document.getElementById('grupo-cupos');
-      const cupoMax = 400;
-      const restante = cupoMax - sabadoPresencial;
-      [['Cupo Máximo', cupoMax], ['Utilizado', sabadoPresencial], ['Disponible', restante]].forEach(([label, value]) => {
-        grupoCupos.innerHTML += `<div class="circle"><h2>${value}</h2><p>${label}</p></div>`;
-      });
+  cargarDashboard();
 
-      // const tbodyPago = document.querySelector('#tabla-pagos tbody');
-      // Object.entries(data.EstadoPorFormaPago).forEach(([forma, total]) => {
-      //   tbodyPago.innerHTML += `<tr><td>${forma}</td><td>${total}</td></tr>`;
-      // });
+  setInterval(() => {
+    console.log("🔄 Dashboard actualizado a las", new Date().toLocaleTimeString());
 
-      // const tbodyUltimos = document.querySelector('#tabla-ultimos tbody');
-      // inscripciones
-      //   .sort((a, b) => new Date(b.fecha_creacion) - new Date(a.fecha_creacion))
-      //   .slice(0, 5)
-      //   .forEach(item => {
-      //     const p = item.participantes[0] || {};
-      //     const fecha = new Date(item.fecha_creacion).toLocaleDateString('es-CO');
-      //     tbodyUltimos.innerHTML += `<tr><td><span class="participante">${p.nombre || 'N/A'}</span><br>${p.documento || ''} • ${p.email || ''}<br>${p.telefono || ''} • ${p.modalidad || ''}<br>${p.iglesia || ''} • ${p.ciudad || ''}<br>${fecha}</td></tr>`;
-      //   });
-
-
-    }
+    document.getElementById('grupo-general').innerHTML = '';
+    document.getElementById('detalle-modalidad').textContent = '';
+    document.getElementById('grupo-cupos').innerHTML = '';
+    document.getElementById('avancePorcentaje').textContent = '0%';
+    
+    const chartCanvas = document.getElementById('avanceChart');
+    const chartCtx = chartCanvas.getContext('2d');
+    chartCtx.clearRect(0, 0, chartCanvas.width, chartCanvas.height);
 
     cargarDashboard();
+  }, 300000); // Cada 5 minutos (300000 ms)
+</script>
 
-    setInterval(() => {
-      console.log("🔄 Dashboard actualizado a las", new Date().toLocaleTimeString());
-
-      document.getElementById('grupo-general').innerHTML = '';
-      document.getElementById('detalle-modalidad').textContent = '';
-      document.getElementById('grupo-cupos').innerHTML = '';
-      document.getElementById('grupo-recaudo').innerHTML = '';
-      // document.querySelector('#tabla-pagos tbody').innerHTML = '';
-      // document.querySelector('#tabla-ultimos tbody').innerHTML = '';
-      document.getElementById('avancePorcentaje').textContent = '0%';
-      const chartCanvas = document.getElementById('avanceChart');
-      chartCanvas.getContext('2d').clearRect(0, 0, chartCanvas.width, chartCanvas.height);
-
-      cargarDashboard();
-    }, 3000000); // 5 minutos
-
-  </script>
 </body>
 </html>
