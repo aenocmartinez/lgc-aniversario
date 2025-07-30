@@ -14,82 +14,145 @@ func NewEstadisticasDao(db *gorm.DB) *EstadisticasDao {
 	return &EstadisticasDao{db: db}
 }
 
-func (i *EstadisticasDao) ObtenerResumenEstadisticas(cupoMax int) dto.EstadisticaResumenDTO {
+func (i *EstadisticasDao) ObtenerResumenEstadisticasEvento(cupoMax int) dto.EstadisticaEventoDTO {
+	var cupoMaximoSabado int = cupoMax
+	db := i.db
+	var resultado dto.EstadisticaEventoDTO
+	resultado.CupoMaximoPresencialSabado = cupoMaximoSabado
+
+	// Variables auxiliares para Count
+	var totalInscritos int64
+	var totalSabado int64
+	var totalViernes int64
+	var totalPresencialesSabado int64
+	var totalVirtualesSabado int64
+
+	// 1. Total de inscritos (excluyendo Rechazada)
+	db.Table("participantes AS p").
+		Joins("JOIN inscripciones i ON i.id = p.inscripcion_id").
+		Where("i.estado <> ?", "Rechazada").
+		Count(&totalInscritos)
+
+	// 2. Total inscritos sábado
+	db.Table("participantes AS p").
+		Joins("JOIN inscripciones i ON i.id = p.inscripcion_id").
+		Where("p.dias_asistencia = ? AND i.estado <> ?", "sabado", "Rechazada").
+		Count(&totalSabado)
+
+	// 3. Total inscritos viernes_y_domingo
+	db.Table("participantes AS p").
+		Joins("JOIN inscripciones i ON i.id = p.inscripcion_id").
+		Where("p.dias_asistencia = ? AND i.estado <> ?", "viernes_y_domingo", "Rechazada").
+		Count(&totalViernes)
+
+	// 4. Total PRESENCIALES sábado
+	db.Table("participantes AS p").
+		Joins("JOIN inscripciones i ON i.id = p.inscripcion_id").
+		Where("p.dias_asistencia = ? AND p.modalidad = ? AND i.estado <> ?", "sabado", "presencial", "Rechazada").
+		Count(&totalPresencialesSabado)
+
+	// 5. Total VIRTUALES sábado
+	db.Table("participantes AS p").
+		Joins("JOIN inscripciones i ON i.id = p.inscripcion_id").
+		Where("p.dias_asistencia = ? AND p.modalidad = ? AND i.estado <> ?", "sabado", "virtual", "Rechazada").
+		Count(&totalVirtualesSabado)
+
+	// Asignar al DTO (de int64 a int)
+	resultado.TotalInscritos = int(totalInscritos)
+	resultado.TotalInscritosSabado = int(totalSabado)
+	resultado.TotalInscritosViernes = int(totalViernes)
+	resultado.TotalPresencialesSabado = int(totalPresencialesSabado)
+	resultado.TotalVirtualesSabado = int(totalVirtualesSabado)
+
+	// 6. Cupo restante
+	resultado.CupoRestanteSabado = cupoMaximoSabado - resultado.TotalPresencialesSabado
+
+	// 7. Porcentaje de avance a la meta
+	if cupoMaximoSabado > 0 {
+		resultado.PorcentajeAvanceMeta = (float64(resultado.TotalPresencialesSabado) / float64(cupoMaximoSabado)) * 100
+	}
+
+	var totalCOP, presencialCOP int64
+	var virtualUSD float64
+
+	// Total COP (todos los que pagaron en COP y no están Rechazados)
+	db.Table("inscripciones").
+		Where("estado <> ? AND forma_pago != ?", "Rechazada", "gratuito").
+		Select("SUM(monto_pagado_cop)").Scan(&totalCOP)
+
+	// Recaudo presencial COP (solo presencial)
+	db.Table("inscripciones").
+		Where("estado <> ?", "Rechazada").
+		Select("SUM(monto_pagado_cop)").
+		Scan(&presencialCOP)
+
+	// Recaudo virtual USD (solo virtual)
+	db.Table("inscripciones").
+		Where("estado <> ?", "Rechazada").
+		Select("SUM(monto_pagado_usd)").
+		Scan(&virtualUSD)
+
+	resultado.TotalRecaudo = int(totalCOP)
+	resultado.RecaudoPresencial = int(presencialCOP)
+	resultado.RecaudoVirtual = virtualUSD
+
+	return resultado
+}
+
+func (i *EstadisticasDao) ObtenerReporteParaContador() []dto.ReporteContadorInscripcionDTO {
 	db := i.db
 
-	// 1. Total por estado
-	var estadoResults []struct {
-		Estado string
-		Total  int
+	// 1. Obtener inscripciones PreAprobadas que no son gratuitas
+	var inscripciones []struct {
+		ID             int
+		FormaPago      string
+		MontoPagadoCOP float64
+		MontoPagadoUSD float64
+		SoportePagoURL string
 	}
-	db.Model(&formularioDB{}).
-		Select("estado, COUNT(*) as total").
-		Group("estado").
-		Scan(&estadoResults)
+	db.Table("inscripciones").
+		Select("id, forma_pago, monto_pagado_cop, monto_pagado_usd, soporte_pago_url").
+		Where("forma_pago != ? AND estado = ?", "gratuito", "PreAprobada").
+		Find(&inscripciones)
 
-	totalPorEstado := map[string]int{}
-	for _, r := range estadoResults {
-		totalPorEstado[r.Estado] = r.Total
+	// 2. Obtener participantes de esas inscripciones
+	var participantes []struct {
+		InscripcionID   int
+		NombreCompleto  string
+		NumeroDocumento string
+		Telefono        string
 	}
+	db.Table("participantes").
+		Select("inscripcion_id, nombre_completo, numero_documento, telefono").
+		Where("inscripcion_id IN (?)",
+			db.Table("inscripciones").
+				Select("id").
+				Where("forma_pago != ? AND estado = ?", "gratuito", "PreAprobada")).
+		Find(&participantes)
 
-	// 2. Total por asistencia
-	var asistenciaResults []struct {
-		Asistencia string
-		Total      int
-	}
-	db.Model(&formularioDB{}).
-		Select("asistencia, COUNT(*) as total").
-		Group("asistencia").
-		Scan(&asistenciaResults)
-
-	totalPorAsistencia := map[string]int{}
-	for _, r := range asistenciaResults {
-		totalPorAsistencia[r.Asistencia] = r.Total
-	}
-
-	// 3. Total sin iglesia
-	var totalSinIglesia int64
-	db.Model(&formularioDB{}).Where("TRIM(iglesia) = 'No asiste a una iglesia'").Count(&totalSinIglesia)
-
-	// 4. Distribución por estado y asistencia
-	var estadoAsistenciaResults []struct {
-		Estado     string
-		Asistencia string
-		Total      int
-	}
-	db.Model(&formularioDB{}).
-		Select("estado, asistencia, COUNT(*) as total").
-		Group("estado, asistencia").
-		Scan(&estadoAsistenciaResults)
-
-	distribucion := map[string]map[string]int{}
-	for _, r := range estadoAsistenciaResults {
-		if distribucion[r.Estado] == nil {
-			distribucion[r.Estado] = map[string]int{}
+	// 3. Agrupar participantes por inscripción
+	participantesPorInscripcion := make(map[int][]dto.ReporteContadorParticipanteDTO)
+	for _, p := range participantes {
+		dtoPart := dto.ReporteContadorParticipanteDTO{
+			NombreCompleto:  p.NombreCompleto,
+			NumeroDocumento: p.NumeroDocumento,
+			Telefono:        p.Telefono,
 		}
-		distribucion[r.Estado][r.Asistencia] = r.Total
+		participantesPorInscripcion[p.InscripcionID] = append(participantesPorInscripcion[p.InscripcionID], dtoPart)
 	}
 
-	// 5. Inscripciones por día
-	var inscripcionesPorDia []dto.InscripcionesDiaDTO
-	db.Model(&formularioDB{}).
-		Select("DATE(fecha_registro) as fecha, COUNT(*) as total").
-		Group("DATE(fecha_registro)").
-		Order("fecha").
-		Scan(&inscripcionesPorDia)
-
-	// 6. Cupo restante presencial
-	var totalPresenciales int64
-	db.Model(&formularioDB{}).
-		Where("asistencia = 'Presencial' AND estado != 'Anulada'").
-		Count(&totalPresenciales)
-
-	return dto.EstadisticaResumenDTO{
-		TotalPorEstado:               totalPorEstado,
-		TotalPorAsistencia:           totalPorAsistencia,
-		TotalSinIglesia:              int(totalSinIglesia),
-		DistribucionEstadoAsistencia: distribucion,
-		InscripcionesPorDia:          inscripcionesPorDia,
-		CupoRestantePresencial:       cupoMax - int(totalPresenciales),
+	// 4. Construir el DTO final
+	var resultado []dto.ReporteContadorInscripcionDTO
+	for _, insc := range inscripciones {
+		resultado = append(resultado, dto.ReporteContadorInscripcionDTO{
+			ID:             insc.ID,
+			FormaPago:      insc.FormaPago,
+			MontoPagadoCOP: insc.MontoPagadoCOP,
+			MontoPagadoUSD: insc.MontoPagadoUSD,
+			SoportePagoURL: insc.SoportePagoURL,
+			Participantes:  participantesPorInscripcion[insc.ID],
+		})
 	}
+
+	return resultado
 }

@@ -12,17 +12,24 @@ type UserRepository interface {
 
 type InscripcionRepository interface {
 	Crear(inscripcion *Inscripcion) bool
-	BuscarPorID(inscripcionID int64) *Inscripcion
-	BuscarPorDocumento(documento string) *Inscripcion
-	ListarInscripcionesPorEstado(estado string) []Inscripcion
-	TotalInscripcionesPresenciales() int
+	CrearConValidacionDeCupo(inscripcion *Inscripcion, participantes []Participante, cupoMax int) error
 	Listar() []Inscripcion
-	InscripcionAprobada(inscripcionID int64) bool
+	BuscarPorID(inscripcionID int64) Inscripcion
+	AgregarParticipante(inscripcionID int64, participante Participante) bool
+	ObtenerParticipantes(inscripcionID int64) []Participante
 	Aprobar(inscripcionID int64) bool
-	Anular(inscripcionID int64) bool
-	CrearConValidacionDeCupo(inscripcion *Inscripcion, cupoMax int) (bool, error)
+	Rechazar(inscripcionID int64) bool
+	CuposDisponibles(cupoMax int) (ocupados int, disponibles int)
+	ListarConParticipantes() []dto.InscripcionConParticipantesDTO
+	BuscarParticipantePorDocumento(documento string) (*Participante, string, error)
+	EliminarParticipanteYValidarInscripcion(participanteID int64) error
+}
+
+type ParticipanteRepository interface {
+	ObtenerParticipantesParaLogistica() []dto.ReporteLogisticaDTO
 }
 
 type EstadisticasRepository interface {
-	ObtenerResumenEstadisticas(cupoMax int) dto.EstadisticaResumenDTO
+	ObtenerResumenEstadisticasEvento(cupoMax int) dto.EstadisticaEventoDTO
+	ObtenerReporteParaContador() []dto.ReporteContadorInscripcionDTO
 }

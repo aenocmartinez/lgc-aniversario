@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dashboard Inscripciones</title>
+  <link rel="icon" type="image/png" href="assets/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&family=Lato&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --verde: #1b3c2a;
+      --naranja: #c16c4f;
+      --marron: #b3885f;
+      --fondo: #fdfaed;
+      --blanco: #ffffff;
+    }
+
+    body {
+      margin: 0;
+      padding: 20px 40px;
+      font-family: 'Lato', sans-serif;
+      background: var(--fondo);
+      color: var(--verde);
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 40px;
+      justify-content: center;
+    }
+
+    header img {
+      height: 70px;
+    }
+
+    header h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 2.2em;
+      margin: 0;
+    }
+
+    section {
+      margin-bottom: 80px;
+      padding-bottom: 30px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .section-title {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.6em;
+      margin-bottom: 25px;
+      text-align: center;
+      color: var(--verde);
+      position: relative;
+    }
+
+    .section-title::after {
+      content: '';
+      display: block;
+      width: 80px;
+      height: 4px;
+      background-color: var(--naranja);
+      margin: 10px auto 0;
+      border-radius: 2px;
+    }
+
+    .circle-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 30px;
+      justify-content: center;
+    }
+
+    .circle {
+      background: var(--blanco);
+      border-radius: 50%;
+      width: 180px;
+      height: 180px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+      text-align: center;
+      padding: 15px;
+      transition: transform 0.3s ease;
+    }
+
+    .circle:hover {
+      transform: scale(1.06);
+    }
+
+    .circle h2 {
+      font-size: 2.2em;
+      margin: 0;
+      color: var(--naranja);
+    }
+
+    .circle p {
+      font-size: 1em;
+      margin-top: 10px;
+      color: var(--verde);
+    }
+
+    .chart-wrapper {
+      max-width: 320px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    .chart-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 1.8em;
+      font-family: 'Poppins', sans-serif;
+      font-weight: bold;
+      color: var(--verde);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      font-size: 1.1em;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 14px 18px;
+      text-align: left;
+    }
+
+    th {
+      background: var(--verde);
+      color: var(--blanco);
+    }
+
+    .participante {
+      font-weight: bold;
+    }
+
+    #detalle-modalidad {
+      text-align: center;
+      font-size: 1.1em;
+      margin-top: 20px;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="assets/logo-lgc.png" alt="Logo LGC" />
+    <h1>Dashboard de Inscripciones</h1>
+  </header>
+
+  <section>
+    <div class="section-title">Consolidado General</div>
+    <div class="circle-group" id="grupo-general"></div>
+    <p id="detalle-modalidad"></p>
+  </section>
+
+  <section>
+    <div class="section-title">Avance hacia la Meta (400)</div>
+    <div class="chart-wrapper">
+      <canvas id="avanceChart"></canvas>
+      <div class="chart-text" id="avancePorcentaje">0%</div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-title">Cupos Presenciales Sábado</div>
+    <div class="circle-group" id="grupo-cupos"></div>
+  </section>
+
+  <section>
+    <div class="section-title">Recaudo Total</div>
+    <div class="circle-group" id="grupo-recaudo"></div>
+  </section>
+
+
+  <script>
+  async function cargarDashboard() {
+    const [resResumen, resInscripciones] = await Promise.all([
+      fetch('https://dockerapps.pulzo.com/lgc-aniversario/estadisticas/resumen'),
+      fetch('https://dockerapps.pulzo.com/lgc-aniversario/estadisticas/inscripciones')
+    ]);
+
+    const { data } = await resResumen.json();
+    const { data: inscripciones } = await resInscripciones.json();
+
+    const total = data.TotalInscritos || 0;
+    const sabado = data.TotalInscritosSabado || 0;
+    const viernesDomingo = data.TotalInscritosViernes || 0;
+    const sabadoPresencial = data.TotalPresencialesSabado || 0;
+    const sabadoVirtual = data.TotalVirtualesSabado || 0;
+    const cupoMax = data.CupoMaximoPresencialSabado || 400;
+    const restante = data.CupoRestanteSabado || 0;
+    const porcentaje = (data.PorcentajeAvanceMeta || 0).toFixed(1);
+
+    // 🔵 Sección Consolidado General
+    const grupoGeneral = document.getElementById('grupo-general');
+    [['Total inscritos', total], ['Sábado', sabado], ['Viernes y Domingo', viernesDomingo]].forEach(([label, value]) => {
+      grupoGeneral.innerHTML += `<div class="circle"><h2>${value}</h2><p>${label}</p></div>`;
+    });
+
+    // 🟠 Detalle modalidad sábado
+    document.getElementById('detalle-modalidad').textContent =
+      `De los ${sabado} inscritos para el día sábado, ${sabadoPresencial} son presenciales y ${sabadoVirtual} son virtuales.`;
+
+    // 🟢 Avance hacia la meta
+    document.getElementById('avancePorcentaje').textContent = `${porcentaje}%`;
+
+    new Chart(document.getElementById('avanceChart'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Avance', 'Restante'],
+        datasets: [{
+          data: [sabadoPresencial, cupoMax - sabadoPresencial],
+          backgroundColor: ['#c16c4f', '#eee'],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        cutout: '75%',
+        plugins: { legend: { display: false } }
+      }
+    });
+
+    // 🟤 Cupos presenciales sábado
+    const grupoCupos = document.getElementById('grupo-cupos');
+    [['Cupo Máximo', cupoMax], ['Utilizado', sabadoPresencial], ['Disponible', restante]].forEach(([label, value]) => {
+      grupoCupos.innerHTML += `<div class="circle"><h2>${value}</h2><p>${label}</p></div>`;
+    });
+
+    // 🟣 Recaudo total, virtual y presencial
+    const grupoRecaudo = document.getElementById('grupo-recaudo');
+    const totalRecaudo = data.TotalRecaudo || 0;
+    const recaudoVirtual = data.RecaudoVirtual || 0;
+    const recaudoPresencial = data.RecaudoPresencial || 0;
+
+    [['Presencial', recaudoPresencial], ['Virtual', recaudoVirtual]].forEach(([label, value]) => {
+      grupoRecaudo.innerHTML += `
+        <div class="circle">
+          <h2>$${value.toLocaleString('es-CO')}</h2>
+          <p>${label}</p>
+        </div>`;
+    });
+
+  }
+
+  cargarDashboard();
+
+  setInterval(() => {
+    console.log("🔄 Dashboard actualizado a las", new Date().toLocaleTimeString());
+
+    document.getElementById('grupo-general').innerHTML = '';
+    document.getElementById('detalle-modalidad').textContent = '';
+    document.getElementById('grupo-cupos').innerHTML = '';
+    document.getElementById('grupo-recaudo').innerHTML = '';
+    document.getElementById('avancePorcentaje').textContent = '0%';
+    
+    const chartCanvas = document.getElementById('avanceChart');
+    const chartCtx = chartCanvas.getContext('2d');
+    chartCtx.clearRect(0, 0, chartCanvas.width, chartCanvas.height);
+
+    cargarDashboard();
+  }, 300000); // Cada 5 minutos (300000 ms)
+</script>
+
+</body>
+</html>

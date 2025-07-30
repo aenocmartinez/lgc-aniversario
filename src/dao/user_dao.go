@@ -22,8 +22,8 @@ type UserData struct {
 	Nombre       string
 }
 
-func mapToUser(userData *UserData) *domain.User {
-	user := domain.NewUser(nil)
+func mapToUser(userData *UserData, userDao *UserDao) *domain.User {
+	user := domain.NewUser(userDao)
 	user.SetID(userData.ID)
 	user.SetEmail(userData.Email)
 	user.SetPassword(userData.Password)
@@ -37,11 +37,11 @@ func (r *UserDao) FindByID(id int64) (*domain.User, error) {
 	result := r.db.Table("usuarios").Where("id = ?", id).First(&userData)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return domain.NewUser(nil), nil
+			return domain.NewUser(NewUserDao(r.db)), nil
 		}
-		return nil, result.Error
+		return domain.NewUser(NewUserDao(r.db)), result.Error
 	}
-	return mapToUser(&userData), nil
+	return mapToUser(&userData, r), nil
 }
 
 func (r *UserDao) FindByEmail(email string) (*domain.User, error) {
@@ -53,7 +53,7 @@ func (r *UserDao) FindByEmail(email string) (*domain.User, error) {
 		}
 		return nil, result.Error
 	}
-	return mapToUser(&userData), nil
+	return mapToUser(&userData, r), nil
 }
 
 func (r *UserDao) Save(user *domain.User) error {
@@ -69,11 +69,10 @@ func (r *UserDao) Save(user *domain.User) error {
 
 func (r *UserDao) Update(user *domain.User) error {
 	userData := UserData{
-		ID:           user.GetID(),
-		Email:        user.GetEmail(),
-		Password:     user.GetPassword(),
-		SessionToken: user.GetSessionToken(),
-		Nombre:       user.GetName(),
+		ID:       user.GetID(),
+		Email:    user.GetEmail(),
+		Password: user.GetPassword(),
+		Nombre:   user.GetName(),
 	}
 	return r.db.Table("usuarios").Where("id = ?", user.GetID()).Updates(&userData).Error
 }

@@ -2,7 +2,7 @@ package controller
 
 import (
 	"lgc/src/infraestructure/di"
-	usecase "lgc/src/usecase/inscripcion"
+	usecase "lgc/src/usecase/estadisticas"
 
 	"github.com/gin-gonic/gin"
 )

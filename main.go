@@ -3,6 +3,7 @@ package main
 import (
 	"lgc/src/infraestructure/middleware"
 	"lgc/src/view/controller"
+	"net/http"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -24,6 +25,16 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}))
 
+	r.Static("/assets", "./html/assets")
+	r.LoadHTMLGlob("html/*.html")
+	r.GET("/dashboard", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "dashboard.html", gin.H{})
+	})
+
+	r.GET("/dashboard-full", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "dashboard_full.html", gin.H{})
+	})
+
 	// Login
 	r.POST("/login", controller.Login)
 
@@ -34,6 +45,9 @@ func main() {
 	// Formulario inscripcion
 	r.POST("/realizar-inscripcion", controller.RealizarInscripcion)
 	r.POST("/cargar-soporte-pago", controller.CargarArchivoDePago)
+	r.GET("/cupos-disponibles", controller.ConsultarCuposDisponibles)
+	r.GET("/estadisticas/resumen", controller.ObtenerResumenEstadisticas)
+	r.GET("/estadisticas/inscripciones", controller.ListarInscripciones)
 
 	protected := r.Group("/api")
 	protected.Use(middleware.AuthMiddleware())
@@ -43,16 +57,21 @@ func main() {
 		inscripcionGroup := protected.Group("/inscripciones")
 		{
 			inscripcionGroup.GET("", controller.ListarInscripciones)
-			inscripcionGroup.GET("/pendientes", controller.ListarInscripcionesPendientes)
-			inscripcionGroup.GET("/aprobadas", controller.ListarInscripcionesAprobadas)
-			inscripcionGroup.PUT("/anular/:id", controller.AnularInscripcion)
+			inscripcionGroup.PUT("/anular/:id", controller.RechazarInscripcion)
 			inscripcionGroup.PUT("/aprobar/:id", controller.AprobarInscripcion)
-			inscripcionGroup.POST("/pago-efectivo", controller.RealizarInscripcionPagoEfectivo)
 		}
 
-		estadisticaGroup := protected.Group("/estadisticas")
+		reportesGroup := protected.Group("/reportes")
 		{
-			estadisticaGroup.GET("/resumen", controller.ObtenerResumenEstadisticas)
+			reportesGroup.GET("/relacion-ingresos", controller.ReporteRelacionDeIngresos)
+			reportesGroup.GET("/relacion-ingresos/excel", controller.DescargarRelacionIngresosExcel)
+			reportesGroup.GET("/logistica", controller.DescargarReporteLogistica)
+		}
+
+		usuariosGruop := protected.Group("/usuarios")
+		{
+			usuariosGruop.POST("", controller.CrearUsuario)
+			usuariosGruop.PUT("", controller.ActualizarUsuario)
 		}
 	}
 
