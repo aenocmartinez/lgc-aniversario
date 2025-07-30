@@ -6,4 +6,5 @@ type ReporteLogisticaDTO struct {
 	CorreoElectronico string `json:"correo_electronico"`
 	Telefono          string `json:"telefono"`
 	DiasAsistencia    string `json:"dias_asistencia"`
+	Iglesia           string `json:"iglesia"`
 }

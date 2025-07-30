@@ -13,7 +13,7 @@ func GenerarReporteLogisticaExcel(data []dto.ReporteLogisticaDTO) ([]byte, error
 	sheet := "Logistica"
 	f.NewSheet(sheet)
 
-	headers := []string{"#", "NOMBRE COMPLETO", "NUMERO DOCUMENTO", "CORREO ELECTRONICO", "TELEFONO", "DIAS DE ASISTENCIA"}
+	headers := []string{"#", "NOMBRE COMPLETO", "NUMERO DOCUMENTO", "CORREO ELECTRONICO", "TELEFONO", "DIAS DE ASISTENCIA", "IGLESIA"}
 	for i, h := range headers {
 		cell := fmt.Sprintf("%c1", 'A'+i)
 		f.SetCellValue(sheet, cell, h)
@@ -27,6 +27,7 @@ func GenerarReporteLogisticaExcel(data []dto.ReporteLogisticaDTO) ([]byte, error
 		f.SetCellValue(sheet, fmt.Sprintf("D%d", row), p.CorreoElectronico)
 		f.SetCellValue(sheet, fmt.Sprintf("E%d", row), p.Telefono)
 		f.SetCellValue(sheet, fmt.Sprintf("F%d", row), p.DiasAsistencia)
+		f.SetCellValue(sheet, fmt.Sprintf("G%d", row), p.Iglesia)
 	}
 
 	var buf bytes.Buffer

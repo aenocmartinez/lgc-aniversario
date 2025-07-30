@@ -19,7 +19,7 @@ func (r *ParticipanteDao) ObtenerParticipantesParaLogistica() []dto.ReporteLogis
 	var results []dto.ReporteLogisticaDTO
 
 	r.db.Table("inscripciones AS i").
-		Select("p.nombre_completo, p.numero_documento, p.correo_electronico, p.dias_asistencia, p.telefono").
+		Select("p.nombre_completo, p.numero_documento, p.correo_electronico, p.dias_asistencia, p.telefono, p.iglesia").
 		Joins("INNER JOIN participantes p ON i.id = p.inscripcion_id").
 		Where("i.estado <> ?", "Rechazada").
 		Where("p.modalidad <> ?", "Virtual").
