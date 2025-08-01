@@ -65,6 +65,7 @@ func main() {
 		{
 			reportesGroup.GET("/relacion-ingresos", controller.ReporteRelacionDeIngresos)
 			reportesGroup.GET("/relacion-ingresos/excel", controller.DescargarRelacionIngresosExcel)
+			reportesGroup.GET("/relacion-ingresos/virtual/excel", controller.DescargarReporteFinancieroInscritosVirtualExcel)
 			reportesGroup.GET("/logistica", controller.DescargarReporteLogistica)
 		}
 

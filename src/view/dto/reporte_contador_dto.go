@@ -14,3 +14,11 @@ type ReporteContadorInscripcionDTO struct {
 	SoportePagoURL string                           `json:"soporte_pago_url"`
 	Participantes  []ReporteContadorParticipanteDTO `json:"participantes"`
 }
+
+type ReporteInscritosVirtualDTO struct {
+	FormaPago      string  `json:"forma_pago"`
+	Modalidad      string  `json:"modalidad"`
+	MontoPagadoUSD float64 `json:"monto_pagado_usd"`
+	NombreCompleto string  `json:"nombre_completo"`
+	SoportePagoURL string  `json:"soporte_pago_url"`
+}
