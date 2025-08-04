@@ -83,6 +83,43 @@ func (s *EmailService) EnviarEmailConAdjunto(to, subject, htmlBody, filePath str
 	return smtp.SendMail(addr, auth, s.cfg.From, []string{to}, []byte(message.String()))
 }
 
+func (s *EmailService) EnviarEmailConQRUsandoCID(to, subject, htmlBody string, qrBytes []byte) error {
+	auth := smtp.PlainAuth("", s.cfg.Username, s.cfg.Password, s.cfg.SMTPHost)
+
+	var buf bytes.Buffer
+	boundary := "qr_boundary_cid_001"
+
+	// Encabezados MIME
+	buf.WriteString(fmt.Sprintf("From: %s\r\n", s.cfg.From))
+	buf.WriteString(fmt.Sprintf("To: %s\r\n", to))
+	buf.WriteString(fmt.Sprintf("Subject: %s\r\n", subject))
+	buf.WriteString("MIME-Version: 1.0\r\n")
+	buf.WriteString(fmt.Sprintf("Content-Type: multipart/related; boundary=%s\r\n", boundary))
+	buf.WriteString("\r\n")
+
+	// Parte HTML
+	buf.WriteString(fmt.Sprintf("--%s\r\n", boundary))
+	buf.WriteString("Content-Type: text/html; charset=\"UTF-8\"\r\n")
+	buf.WriteString("Content-Transfer-Encoding: quoted-printable\r\n\r\n")
+	buf.WriteString(quotedprintableBody(htmlBody) + "\r\n")
+
+	// Parte imagen (QR)
+	encoded := base64.StdEncoding.EncodeToString(qrBytes)
+	buf.WriteString(fmt.Sprintf("--%s\r\n", boundary))
+	buf.WriteString("Content-Type: image/png\r\n")
+	buf.WriteString("Content-Transfer-Encoding: base64\r\n")
+	buf.WriteString("Content-ID: <qr-code.png>\r\n")
+	buf.WriteString("Content-Disposition: inline; filename=\"qr-code.png\"\r\n\r\n")
+	buf.WriteString(splitBase64(encoded))
+	buf.WriteString("\r\n")
+
+	// Fin del mensaje
+	buf.WriteString(fmt.Sprintf("--%s--\r\n", boundary))
+
+	addr := fmt.Sprintf("%s:%s", s.cfg.SMTPHost, s.cfg.SMTPPort)
+	return smtp.SendMail(addr, auth, s.cfg.From, []string{to}, buf.Bytes())
+}
+
 func quotedprintableBody(body string) string {
 	var buf bytes.Buffer
 	qp := quotedprintable.NewWriter(&buf)

@@ -59,6 +59,7 @@ func main() {
 			inscripcionGroup.GET("", controller.ListarInscripciones)
 			inscripcionGroup.PUT("/anular/:id", controller.RechazarInscripcion)
 			inscripcionGroup.PUT("/aprobar/:id", controller.AprobarInscripcion)
+			inscripcionGroup.GET("enviar-qr", controller.EnviarEmailConQR)
 		}
 
 		reportesGroup := protected.Group("/reportes")

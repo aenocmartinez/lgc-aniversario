@@ -27,6 +27,7 @@ type InscripcionRepository interface {
 
 type ParticipanteRepository interface {
 	ObtenerParticipantesParaLogistica() []dto.ReporteLogisticaDTO
+	ObtenerParticipantesParaEnvioQR() []Participante
 }
 
 type EstadisticasRepository interface {
