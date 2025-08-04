@@ -31,6 +31,27 @@ func DescargarRelacionIngresosExcel(c *gin.Context) {
 	c.Data(http.StatusOK, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileBytes)
 }
 
+func DescargarReporteFinancieroInscritosVirtualExcel(c *gin.Context) {
+	useCase := usecase.NewGenerarReporteFinancieroInscritoVirtualUsecase(
+		di.GetContainer().GetEstadisticasRepository(),
+	)
+
+	fileBytes, err := useCase.Execute()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "No se pudo generar el reporte",
+		})
+		return
+	}
+
+	loc, _ := time.LoadLocation("America/Bogota")
+	fechaBogota := time.Now().In(loc)
+	fileName := "virtual_aniversario_" + fechaBogota.Format("2006-01-02_15-04-05") + ".xlsx"
+
+	c.Header("Content-Disposition", "attachment; filename="+fileName)
+	c.Data(http.StatusOK, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileBytes)
+}
+
 func ReporteRelacionDeIngresos(c *gin.Context) {
 
 	useCase := usecase.NewObtenerReporteContadorUseCase(

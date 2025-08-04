@@ -156,3 +156,17 @@ func (i *EstadisticasDao) ObtenerReporteParaContador() []dto.ReporteContadorInsc
 
 	return resultado
 }
+
+func (i *EstadisticasDao) ObtenerReporteFinancieroInscritosVirtual() []dto.ReporteInscritosVirtualDTO {
+	db := i.db
+
+	var resultado []dto.ReporteInscritosVirtualDTO
+
+	db.Table("inscripciones AS i").
+		Select("i.forma_pago, p.modalidad, i.monto_pagado_usd, p.nombre_completo, i.soporte_pago_url").
+		Joins("INNER JOIN participantes p ON i.id = p.inscripcion_id").
+		Where("i.estado <> ? AND i.forma_pago <> ? AND p.modalidad = ?", "Rechazada", "gratuito", "virtual").
+		Scan(&resultado)
+
+	return resultado
+}

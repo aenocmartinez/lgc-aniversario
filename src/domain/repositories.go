@@ -32,4 +32,5 @@ type ParticipanteRepository interface {
 type EstadisticasRepository interface {
 	ObtenerResumenEstadisticasEvento(cupoMax int) dto.EstadisticaEventoDTO
 	ObtenerReporteParaContador() []dto.ReporteContadorInscripcionDTO
+	ObtenerReporteFinancieroInscritosVirtual() []dto.ReporteInscritosVirtualDTO
 }
