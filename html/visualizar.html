@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Participante - 25 Aniversario</title>
+  <link rel="icon" type="image/png" href="/assets/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&family=Lato&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --verde: #1b3c2a;
+      --naranja: #c16c4f;
+      --marron: #b3885f;
+      --fondo: #fdfaed;
+      --blanco: #ffffff;
+      --rojo: #dc3545;
+      --azul: #007bff;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Lato', sans-serif;
+      background-color: var(--fondo);
+      color: var(--verde);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    header img {
+      height: 60px;
+    }
+
+    header h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.5em;
+      margin: 0;
+      color: var(--naranja);
+    }
+
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 20px;
+    }
+
+    #contenido {
+      width: 100%;
+      max-width: 400px;
+      box-sizing: border-box;
+    }
+
+    .contenedor {
+      background: var(--blanco);
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      box-sizing: border-box;
+    }
+
+    @media (min-width: 480px) {
+      .contenedor {
+        padding: 2rem;
+      }
+    }
+
+    .circle {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      margin: 0 auto 1rem;
+    }
+
+    .azul { background-color: var(--azul); }
+    .rojo { background-color: var(--rojo); }
+
+    .nombre {
+      font-size: 1.4rem;
+      font-weight: 600;
+      font-family: 'Poppins', sans-serif;
+      margin-bottom: 1rem;
+    }
+
+    .datos {
+      font-size: 1.1rem;
+      line-height: 1.6;
+    }
+
+    .no-encontrado {
+      font-size: 1.2rem;
+      color: var(--rojo);
+      font-weight: bold;
+      text-align: center;
+      margin-top: 3rem;
+    }
+
+    .footer {
+      padding: 20px;
+      font-size: 0.85rem;
+      color: #999;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <img src="https://dockerapps.pulzo.com/lgc-aniversario/assets/logo-lgc.png" alt="Logo LGC" />
+    <h1>25 Aniversario - Llenos del Espíritu Santo</h1>
+  </header>
+
+  <main class="main">
+    <div id="contenido">
+      <p>Cargando información del participante...</p>
+    </div>
+  </main>
+
+  <footer class="footer">
+    Comunidad Cristiana Integral · La Gran Comisión
+  </footer>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const documento = params.get("documento");
+    const contenido = document.getElementById("contenido");
+
+    if (!documento) {
+      contenido.innerHTML = "<p class='no-encontrado'>No se proporcionó el documento.</p>";
+    } else {
+      fetch(`https://dockerapps.pulzo.com/lgc-aniversario/participantes/buscar?documento=${documento}`)
+        .then(response => {
+          if (!response.ok) throw new Error("Participante no encontrado");
+          return response.json();
+        })
+        .then(json => {
+          const data = json.data;
+          const color = (data.dias_asistencia === "viernes_y_domingo") ? "azul" : "rojo";
+          const dias = data.dias_asistencia.replaceAll("_", " ");
+
+          contenido.innerHTML = `
+            <div class="contenedor">
+              <div class="circle ${color}"></div>
+              <div class="nombre">${data.nombre}</div>
+              <div class="datos">
+                <p><strong>Modalidad:</strong> ${data.modalidad}</p>
+                <p><strong>Días de asistencia:</strong> ${dias}</p>
+              </div>
+            </div>
+          `;
+        })
+        .catch(() => {
+          contenido.innerHTML = `<p class="no-encontrado">Participante no encontrado</p>`;
+        });
+    }
+  </script>
+
+</body>
+</html>

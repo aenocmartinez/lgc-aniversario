@@ -1,5 +1,7 @@
 package domain
 
+import "lgc/src/view/dto"
+
 type Participante struct {
 	id               int64
 	nombre           string
@@ -107,4 +109,22 @@ func (p *Participante) GetHabeasData() bool {
 
 func (p *Participante) SetHabeasData(autorizado bool) {
 	p.habeasData = autorizado
+}
+
+func (p *Participante) Existe() bool {
+	return p.id > 0
+}
+
+func (p *Participante) ToDTO() dto.ParticipanteDTO {
+	return dto.ParticipanteDTO{
+		Nombre:         p.GetNombre(),
+		Documento:      p.GetDocumento(),
+		Email:          p.GetEmail(),
+		Telefono:       p.GetTelefono(),
+		Modalidad:      p.GetModalidad(),
+		DiasAsistencia: p.GetDiasAsistencia(),
+		Iglesia:        p.GetIglesia(),
+		Ciudad:         p.GetCiudad(),
+		HabeasData:     p.GetHabeasData(),
+	}
 }

@@ -63,3 +63,31 @@ func (r *ParticipanteDao) ObtenerParticipantesParaEnvioQR() []domain.Participant
 
 	return participantes
 }
+
+func (r *ParticipanteDao) BuscarParticipantePorDocumento(documento string) domain.Participante {
+	var row struct {
+		ID             int64
+		Nombre         string
+		Documento      string
+		Modalidad      string
+		DiasAsistencia string
+	}
+
+	r.db.Table("participantes AS p").
+		Select("p.id, p.nombre_completo AS nombre, p.numero_documento AS documento, p.modalidad, p.dias_asistencia").
+		Joins("INNER JOIN inscripciones i ON i.id = p.inscripcion_id").
+		Where("i.estado = ?", "Aprobada").
+		Where("p.modalidad <> ?", "virtual").
+		Where("p.numero_documento = ?", documento).
+		Limit(1).
+		Scan(&row)
+
+	p := domain.NewParticipante(r)
+	p.SetID(row.ID)
+	p.SetNombre(row.Nombre)
+	p.SetDocumento(row.Documento)
+	p.SetModalidad(row.Modalidad)
+	p.SetDiasAsistencia(row.DiasAsistencia)
+
+	return *p
+}
