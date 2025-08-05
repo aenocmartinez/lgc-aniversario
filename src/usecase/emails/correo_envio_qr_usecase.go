@@ -27,7 +27,18 @@ func NewCorreoEnvioQRUseCase(
 func (uc *CorreoEnvioQRUseCase) Execute() error {
 	participantes := uc.participanteRepo.ObtenerParticipantesParaEnvioQR()
 
-	for index, p := range participantes {
+	var fueEnviadoCorreoEjemploSabado bool = false
+	var fueEnviadoCorreEjemploViernes bool = false
+
+	for _, p := range participantes {
+
+		if p.GetDiasAsistencia() == "sabado" && fueEnviadoCorreoEjemploSabado {
+			continue
+		}
+
+		if p.GetDiasAsistencia() == "viernes_y_domingo" && fueEnviadoCorreEjemploViernes {
+			continue
+		}
 
 		// textoQR := fmt.Sprintf("https://dockerapps.pulzo.com/lgc-aniversario/participantes/buscar?documento=%s", p.GetDocumento())
 		textoQR := fmt.Sprintf("https://dockerapps.pulzo.com/lgc-aniversario/participantes/visualizar?documento=%s", p.GetDocumento())
@@ -40,12 +51,6 @@ func (uc *CorreoEnvioQRUseCase) Execute() error {
 		// HTML usa la imagen referenciada por CID
 		qrHTML := `<img src="cid:qr-code.png" alt="Código QR" style="width:200px;height:200px;">`
 
-		// htmlBody := fmt.Sprintf(`
-		// 	<p>Hola %s,</p>
-		// 	<p>Este es tu código QR para ingresar al evento:</p>
-		// 	<p>%s</p>
-		// 	<p>Bendiciones,<br>La Iglesia</p>
-		// `, p.GetNombre(), qrHTML)
 		htmlBody := fmt.Sprintf(`
 			<p>Hola %s,</p>
 
@@ -69,9 +74,14 @@ func (uc *CorreoEnvioQRUseCase) Execute() error {
 			return fmt.Errorf("error enviando correo a %s: %w", p.GetEmail(), err)
 		}
 
-		if index == 9 {
-			break
+		if p.GetDiasAsistencia() == "viernes_y_domingo" {
+			fueEnviadoCorreEjemploViernes = true
 		}
+
+		if p.GetDiasAsistencia() == "sabado" {
+			fueEnviadoCorreoEjemploSabado = true
+		}
+
 	}
 
 	return nil
