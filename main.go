@@ -50,6 +50,7 @@ func main() {
 	r.GET("/estadisticas/inscripciones", controller.ListarInscripciones)
 	r.GET("/participantes/buscar", controller.BuscarParticipante)
 	r.GET("/participantes/visualizar", controller.VisualizarParticipante)
+	r.POST("/participantes/registrar-asistencia", controller.ConfirmarAsistencia)
 
 	protected := r.Group("/api")
 	protected.Use(middleware.AuthMiddleware())

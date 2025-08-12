@@ -29,6 +29,7 @@ type ParticipanteRepository interface {
 	ObtenerParticipantesParaLogistica() []dto.ReporteLogisticaDTO
 	ObtenerParticipantesParaEnvioQR() []Participante
 	BuscarParticipantePorDocumento(documento string) Participante
+	RegistrarAsistencia(participanteID int64) bool
 }
 
 type EstadisticasRepository interface {

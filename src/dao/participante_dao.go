@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type ParticipanteDao struct {
@@ -68,15 +69,27 @@ func (r *ParticipanteDao) ObtenerParticipantesParaEnvioQR() []domain.Participant
 
 func (r *ParticipanteDao) BuscarParticipantePorDocumento(documento string) domain.Participante {
 	var row struct {
-		ID             int64
-		Nombre         string
-		Documento      string
-		Modalidad      string
-		DiasAsistencia string
+		ID                   int64
+		Nombre               string
+		Documento            string
+		Modalidad            string
+		DiasAsistencia       string
+		AsistenciaConfirmada bool
 	}
 
 	r.db.Table("participantes AS p").
-		Select("p.id, p.nombre_completo AS nombre, p.numero_documento AS documento, p.modalidad, p.dias_asistencia").
+		Select(`
+			p.id,
+			p.nombre_completo AS nombre,
+			p.numero_documento AS documento,
+			p.modalidad,
+			p.dias_asistencia,
+			EXISTS (
+				SELECT 1
+				FROM participante_asistencia pa
+				WHERE pa.participante_id = p.id
+			) AS asistencia_confirmada
+		`).
 		Joins("INNER JOIN inscripciones i ON i.id = p.inscripcion_id").
 		Where("i.estado = ?", "Aprobada").
 		Where("p.modalidad <> ?", "virtual").
@@ -90,6 +103,28 @@ func (r *ParticipanteDao) BuscarParticipantePorDocumento(documento string) domai
 	p.SetDocumento(row.Documento)
 	p.SetModalidad(row.Modalidad)
 	p.SetDiasAsistencia(row.DiasAsistencia)
+	p.SetAsistenciaConfirmada(row.AsistenciaConfirmada)
 
 	return *p
+}
+
+type participanteAsistencia struct {
+	ID             int64 `gorm:"primaryKey"`
+	ParticipanteID int64 `gorm:"column:participante_id;uniqueIndex:ux_participante_asistencia_participante"`
+}
+
+func (r *ParticipanteDao) RegistrarAsistencia(participanteID int64) bool {
+	if participanteID <= 0 {
+		return false
+	}
+	pa := participanteAsistencia{ParticipanteID: participanteID}
+
+	err := r.db.Clauses(
+		clause.OnConflict{
+			Columns:   []clause.Column{{Name: "participante_id"}},
+			DoNothing: true,
+		},
+	).Create(&pa).Error
+
+	return err == nil
 }

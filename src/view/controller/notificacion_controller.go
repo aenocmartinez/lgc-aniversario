@@ -5,6 +5,7 @@ import (
 	"lgc/src/infraestructure/email"
 	usecase "lgc/src/usecase/emails"
 	usecaseParticipante "lgc/src/usecase/participantes"
+	formrequest "lgc/src/view/form-request"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -33,6 +34,23 @@ func BuscarParticipante(c *gin.Context) {
 
 	buscarParticipante := usecaseParticipante.NewBuscarParticipantePorDocumentoUseCase(di.GetContainer().GetParticipanteRepository())
 	response := buscarParticipante.Execute(documento)
+
+	c.JSON(response.StatusCode, response)
+}
+
+func ConfirmarAsistencia(c *gin.Context) {
+	var req formrequest.ConfirmarAsistenciaFormRequest
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	confirmarAsistencia := usecaseParticipante.NewConfirmaAsistenciaUseCase(
+		di.GetContainer().GetParticipanteRepository(),
+	)
+
+	response := confirmarAsistencia.Execute(req.Documento)
 
 	c.JSON(response.StatusCode, response)
 }

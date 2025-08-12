@@ -3,23 +3,25 @@ package domain
 import "lgc/src/view/dto"
 
 type Participante struct {
-	id               int64
-	nombre           string
-	documento        string
-	email            string
-	telefono         string
-	modalidad        string
-	diasAsistencia   string
-	iglesia          string
-	ciudad           string
-	habeasData       bool
-	inscripcion      *Inscripcion
-	participanteRepo ParticipanteRepository
+	id                   int64
+	nombre               string
+	documento            string
+	email                string
+	telefono             string
+	modalidad            string
+	diasAsistencia       string
+	iglesia              string
+	ciudad               string
+	habeasData           bool
+	asistenciaConfirmada bool
+	inscripcion          *Inscripcion
+	participanteRepo     ParticipanteRepository
 }
 
 func NewParticipante(participanteRepo ParticipanteRepository) *Participante {
 	return &Participante{
-		participanteRepo: participanteRepo,
+		participanteRepo:     participanteRepo,
+		asistenciaConfirmada: false,
 	}
 }
 
@@ -111,20 +113,33 @@ func (p *Participante) SetHabeasData(autorizado bool) {
 	p.habeasData = autorizado
 }
 
+func (p *Participante) SetAsistenciaConfirmada(asistenciaConfirmada bool) {
+	p.asistenciaConfirmada = asistenciaConfirmada
+}
+
+func (p *Participante) AsistenciaConfirmada() bool {
+	return p.asistenciaConfirmada
+}
+
 func (p *Participante) Existe() bool {
 	return p.id > 0
 }
 
+func (p *Participante) RegistrarAsistencia() bool {
+	return p.participanteRepo.RegistrarAsistencia(p.id)
+}
+
 func (p *Participante) ToDTO() dto.ParticipanteDTO {
 	return dto.ParticipanteDTO{
-		Nombre:         p.GetNombre(),
-		Documento:      p.GetDocumento(),
-		Email:          p.GetEmail(),
-		Telefono:       p.GetTelefono(),
-		Modalidad:      p.GetModalidad(),
-		DiasAsistencia: p.GetDiasAsistencia(),
-		Iglesia:        p.GetIglesia(),
-		Ciudad:         p.GetCiudad(),
-		HabeasData:     p.GetHabeasData(),
+		Nombre:               p.GetNombre(),
+		Documento:            p.GetDocumento(),
+		Email:                p.GetEmail(),
+		Telefono:             p.GetTelefono(),
+		Modalidad:            p.GetModalidad(),
+		DiasAsistencia:       p.GetDiasAsistencia(),
+		Iglesia:              p.GetIglesia(),
+		Ciudad:               p.GetCiudad(),
+		HabeasData:           p.GetHabeasData(),
+		AsistenciaConfirmada: p.AsistenciaConfirmada(),
 	}
 }
