@@ -9,6 +9,7 @@
   <style>
     :root {
       --verde: #1b3c2a;
+      --verde-claro: #2a5a40; /* NUEVO: verde más claro para el botón */
       --naranja: #c16c4f;
       --marron: #b3885f;
       --fondo: #fdfaed;
@@ -111,9 +112,10 @@
       text-align: center;
     }
 
+    /* Título de días: SIEMPRE el elemento más destacado */
     .dias-asistencia {
       font-size: clamp(2.2rem, 7vw, 3.8rem);
-      font-weight: 800;
+      font-weight: 900;
       color: var(--naranja);
       margin-top: 0.25rem;
       display: block;
@@ -121,6 +123,11 @@
       text-transform: uppercase;
       letter-spacing: 0.02em;
       word-break: break-word;
+    }
+    /* Para textos más largos (como "Viernes, Sábado y Domingo") sin perder protagonismo */
+    .dias-asistencia.long {
+      font-size: clamp(1.9rem, 6vw, 3rem);
+      letter-spacing: 0.015em;
     }
 
     .acciones { margin-top: 1.25rem; }
@@ -131,16 +138,15 @@
       cursor: pointer;
       padding: 0.9rem 1.1rem;
       border-radius: 10px;
-      font-weight: 700;
+      font-weight: 800;
       font-size: 1rem;
       width: 100%;
-      background: var(--verde);
+      background: var(--verde-claro); /* NUEVO: tono más claro */
       color: var(--blanco);
-      transition: transform .05s ease, opacity .2s ease, box-shadow .2s ease;
+      transition: transform .05s ease, opacity .2s ease, box-shadow .2s ease, background-color .2s ease;
       box-shadow: 0 2px 10px rgba(0,0,0,.08);
     }
-
-    .btn:hover { opacity: .95; }
+    .btn:hover { opacity: .97; }
     .btn:active { transform: translateY(1px); }
     .btn:disabled {
       opacity: .7;
@@ -157,8 +163,8 @@
     .info { color: var(--gris); }
 
     .mensaje-grande {
-      font-size: 1.5rem; /* más grande que el resto */
-      font-weight: 800;  /* bien negrita */
+      font-size: 1.5rem;
+      font-weight: 800;
       text-align: center;
       margin-top: 1.5rem;
     }
@@ -188,16 +194,33 @@
   const documento = params.get("documento");
   const contenido = document.getElementById("contenido");
 
-function getColorClase(diasAsistencia) {
-  if (diasAsistencia === "viernes_y_domingo") return "verde";   
-  if (diasAsistencia === "sabado") return "naranja";            
-  return "verde"; 
-}
+  function getColorClase(diasAsistencia) {
+    if (diasAsistencia === "viernes_y_domingo") return "verde";
+    if (diasAsistencia === "sabado") return "naranja";
+    return "verde";
+  }
 
+  // NUEVO: formateador de texto + clase para largos
+  function getDiasTextoYClase(diasAsistencia) {
+    let texto = (diasAsistencia || '').replaceAll("_", " ");
+    let extraClass = "";
+
+    if (diasAsistencia === "sabado") {
+      // Reglas solicitadas: cuando es sábado, mostrar los TRES días
+      texto = "Viernes, Sábado y Domingo";
+      extraClass = "long"; // Ajuste visual para texto largo manteniendo protagonismo
+    } else if (diasAsistencia === "viernes_y_domingo") {
+      texto = "Viernes y Domingo";
+    } else if (texto.trim() === "") {
+      texto = "Sin información";
+    }
+
+    return { texto, extraClass };
+  }
 
   function crearTarjeta(data) {
     const color = getColorClase(data.dias_asistencia);
-    const dias = (data.dias_asistencia || '').replaceAll("_", " ");
+    const { texto, extraClass } = getDiasTextoYClase(data.dias_asistencia);
 
     contenido.innerHTML = `
       <div class="contenedor">
@@ -205,7 +228,7 @@ function getColorClase(diasAsistencia) {
         <div class="nombre">${data.nombre}</div>
         <div class="datos">
           <p><strong>Modalidad:</strong> ${data.modalidad}</p>
-          <p><strong>Días de asistencia:</strong> <span class="dias-asistencia">${dias}</span></p>
+          <p><strong>Días de asistencia:</strong> <span class="dias-asistencia ${extraClass}">${texto}</span></p>
         </div>
         <div class="acciones">
           <button id="btnConfirmar" class="btn" type="button">Confirmar asistencia</button>
@@ -249,7 +272,7 @@ function getColorClase(diasAsistencia) {
 
   function crearTarjetaConfirmada(data) {
     const color = getColorClase(data.dias_asistencia);
-    const dias = (data.dias_asistencia || '').replaceAll("_", " ");
+    const { texto, extraClass } = getDiasTextoYClase(data.dias_asistencia);
 
     contenido.innerHTML = `
       <div class="contenedor">
@@ -257,7 +280,7 @@ function getColorClase(diasAsistencia) {
         <div class="nombre">${data.nombre}</div>
         <div class="datos">
           <p><strong>Modalidad:</strong> ${data.modalidad}</p>
-          <p><strong>Días de asistencia:</strong> <span class="dias-asistencia">${dias}</span></p>
+          <p><strong>Días de asistencia:</strong> <span class="dias-asistencia ${extraClass}">${texto}</span></p>
         </div>
         <div class="mensaje ok mensaje-grande">El participante ya ha confirmado su asistencia</div>
       </div>
