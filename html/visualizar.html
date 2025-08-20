@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Participante - 25 Aniversario</title>
+  <link rel="icon" type="image/png" href="/assets/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&family=Lato&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --verde: #1b3c2a;
+      --verde-claro: #2a5a40; /* NUEVO: verde más claro para el botón */
+      --naranja: #c16c4f;
+      --marron: #b3885f;
+      --fondo: #fdfaed;
+      --blanco: #ffffff;
+      --rojo: #dc3545;
+      --azul: #007bff;
+      --gris: #6c757d;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Lato', sans-serif;
+      background-color: var(--fondo);
+      color: var(--verde);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    header img { height: 60px; }
+
+    header h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.5em;
+      margin: 0;
+      color: var(--naranja);
+    }
+
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 20px;
+    }
+
+    #contenido {
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .contenedor {
+      background: var(--blanco);
+      border-radius: 12px;
+      padding: 1.75rem;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    @media (min-width: 480px) {
+      .contenedor { padding: 2rem; }
+    }
+
+    .circle {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      margin: 0 auto 1rem;
+    }
+
+    .azul { background-color: var(--azul); }
+    .rojo { background-color: var(--rojo); }
+    .verde { background-color: var(--verde); }
+    .naranja { background-color: var(--naranja); }
+
+    .nombre {
+      font-size: 1.5rem;
+      font-weight: 600;
+      font-family: 'Poppins', sans-serif;
+      margin-bottom: 1rem;
+      word-break: break-word;
+    }
+
+    .datos { font-size: 1.05rem; line-height: 1.6; }
+
+    .no-encontrado {
+      font-size: 1.2rem;
+      color: var(--rojo);
+      font-weight: bold;
+      text-align: center;
+      margin-top: 3rem;
+    }
+
+    .footer {
+      padding: 20px;
+      font-size: 0.85rem;
+      color: #999;
+      text-align: center;
+    }
+
+    /* Título de días: SIEMPRE el elemento más destacado */
+    .dias-asistencia {
+      font-size: clamp(2.2rem, 7vw, 3.8rem);
+      font-weight: 900;
+      color: var(--naranja);
+      margin-top: 0.25rem;
+      display: block;
+      line-height: 1.1;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      word-break: break-word;
+    }
+    /* Para textos más largos (como "Viernes, Sábado y Domingo") sin perder protagonismo */
+    .dias-asistencia.long {
+      font-size: clamp(1.9rem, 6vw, 3rem);
+      letter-spacing: 0.015em;
+    }
+
+    .acciones { margin-top: 1.25rem; }
+
+    .btn {
+      appearance: none;
+      border: none;
+      cursor: pointer;
+      padding: 0.9rem 1.1rem;
+      border-radius: 10px;
+      font-weight: 800;
+      font-size: 1rem;
+      width: 100%;
+      background: var(--verde-claro); /* NUEVO: tono más claro */
+      color: var(--blanco);
+      transition: transform .05s ease, opacity .2s ease, box-shadow .2s ease, background-color .2s ease;
+      box-shadow: 0 2px 10px rgba(0,0,0,.08);
+    }
+    .btn:hover { opacity: .97; }
+    .btn:active { transform: translateY(1px); }
+    .btn:disabled {
+      opacity: .7;
+      cursor: not-allowed;
+      background: var(--gris);
+    }
+
+    .mensaje {
+      margin-top: 0.75rem;
+      font-size: 0.95rem;
+    }
+    .ok { color: #198754; }
+    .err { color: var(--rojo); }
+    .info { color: var(--gris); }
+
+    .mensaje-grande {
+      font-size: 1.5rem;
+      font-weight: 800;
+      text-align: center;
+      margin-top: 1.5rem;
+    }
+
+  </style>
+</head>
+<body>
+
+<header>
+  <img src="https://dockerapps.pulzo.com/lgc-aniversario/assets/logo-lgc.png" alt="Logo LGC" />
+  <h1>25 Aniversario - Llenos del Espíritu Santo</h1>
+</header>
+
+<main class="main">
+  <div id="contenido">
+    <p>Cargando información del participante...</p>
+  </div>
+</main>
+
+<footer class="footer">
+  Comunidad Cristiana Integral · La Gran Comisión
+</footer>
+
+<script>
+  const API_BASE = 'https://dockerapps.pulzo.com/lgc-aniversario';
+  const params = new URLSearchParams(window.location.search);
+  const documento = params.get("documento");
+  const contenido = document.getElementById("contenido");
+
+  function getColorClase(diasAsistencia) {
+    if (diasAsistencia === "viernes_y_domingo") return "verde";
+    if (diasAsistencia === "sabado") return "naranja";
+    return "verde";
+  }
+
+  // NUEVO: formateador de texto + clase para largos
+  function getDiasTextoYClase(diasAsistencia) {
+    let texto = (diasAsistencia || '').replaceAll("_", " ");
+    let extraClass = "";
+
+    if (diasAsistencia === "sabado") {
+      // Reglas solicitadas: cuando es sábado, mostrar los TRES días
+      texto = "Viernes, Sábado y Domingo";
+      extraClass = "long"; // Ajuste visual para texto largo manteniendo protagonismo
+    } else if (diasAsistencia === "viernes_y_domingo") {
+      texto = "Viernes y Domingo";
+    } else if (texto.trim() === "") {
+      texto = "Sin información";
+    }
+
+    return { texto, extraClass };
+  }
+
+  function crearTarjeta(data) {
+    const color = getColorClase(data.dias_asistencia);
+    const { texto, extraClass } = getDiasTextoYClase(data.dias_asistencia);
+
+    contenido.innerHTML = `
+      <div class="contenedor">
+        <div class="circle ${color}" aria-hidden="true"></div>
+        <div class="nombre">${data.nombre}</div>
+        <div class="datos">
+          <p><strong>Modalidad:</strong> ${data.modalidad}</p>
+          <p><strong>Días de asistencia:</strong> <span class="dias-asistencia ${extraClass}">${texto}</span></p>
+        </div>
+        <div class="acciones">
+          <button id="btnConfirmar" class="btn" type="button">Confirmar asistencia</button>
+          <div id="mensaje" class="mensaje info"></div>
+        </div>
+      </div>
+    `;
+
+    const btn = document.getElementById('btnConfirmar');
+    const msg = document.getElementById('mensaje');
+
+    btn.addEventListener('click', async () => {
+      const prev = btn.textContent;
+      try {
+        btn.disabled = true;
+        btn.textContent = 'Confirmando...';
+        msg.textContent = 'Enviando confirmación...';
+        msg.className = 'mensaje info';
+
+        const res = await fetch(`${API_BASE}/participantes/registrar-asistencia`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({ documento })
+        });
+
+        const payload = await res.json().catch(() => ({ code: 500, message: 'Respuesta inválida del servidor' }));
+        manejarRespuesta(payload, { btn, msg, prevText: prev });
+
+      } catch (e) {
+        console.error(e);
+        btn.disabled = false;
+        btn.textContent = prev;
+        msg.textContent = e?.message || 'Ocurrió un error al confirmar.';
+        msg.className = 'mensaje err';
+      }
+    });
+  }
+
+  function crearTarjetaConfirmada(data) {
+    const color = getColorClase(data.dias_asistencia);
+    const { texto, extraClass } = getDiasTextoYClase(data.dias_asistencia);
+
+    contenido.innerHTML = `
+      <div class="contenedor">
+        <div class="circle ${color}" aria-hidden="true"></div>
+        <div class="nombre">${data.nombre}</div>
+        <div class="datos">
+          <p><strong>Modalidad:</strong> ${data.modalidad}</p>
+          <p><strong>Días de asistencia:</strong> <span class="dias-asistencia ${extraClass}">${texto}</span></p>
+        </div>
+        <div class="mensaje ok mensaje-grande">El participante ya ha confirmado su asistencia</div>
+      </div>
+    `;
+  }
+
+  function manejarRespuesta(payload, { btn, msg, prevText }) {
+    const code = Number(payload?.code);
+
+    switch (code) {
+      case 200:
+        btn.textContent = 'Confirmado';
+        msg.textContent = payload?.message || 'Asistencia confirmada exitosamente';
+        msg.className = 'mensaje ok';
+        btn.disabled = true;
+        return;
+      case 409:
+        btn.textContent = 'Ya confirmado';
+        msg.textContent = payload?.message || 'El participante ya ha confirmado su asistencia';
+        msg.className = 'mensaje info';
+        btn.disabled = true;
+        return;
+      case 404:
+        btn.textContent = prevText;
+        btn.disabled = false;
+        msg.textContent = payload?.message || 'Participante no encontrado';
+        msg.className = 'mensaje err';
+        return;
+      case 500:
+      default:
+        btn.textContent = prevText;
+        btn.disabled = false;
+        msg.textContent = payload?.message || 'Ocurrió un error al confirmar.';
+        msg.className = 'mensaje err';
+        return;
+    }
+  }
+
+  async function init() {
+    if (!documento) {
+      contenido.innerHTML = "<p class='no-encontrado'>No se proporcionó el documento.</p>";
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE}/participantes/buscar?documento=${encodeURIComponent(documento)}`);
+      if (!response.ok) throw new Error("Participante no encontrado");
+      const json = await response.json();
+      const data = json?.data || {};
+
+      if (data.asistencia_confirmada === true || data.asistencia_confirmada === 1 || data.asistencia_confirmada === "1") {
+        crearTarjetaConfirmada(data);
+      } else {
+        crearTarjeta(data);
+      }
+    } catch {
+      contenido.innerHTML = `<p class="no-encontrado">Participante no encontrado</p>`;
+    }
+  }
+
+  init();
+</script>
+
+</body>
+</html>
