@@ -1,6 +1,9 @@
 package domain
 
-import "lgc/src/view/dto"
+import (
+	"lgc/src/view/dto"
+	"time"
+)
 
 type UserRepository interface {
 	FindByID(id int64) (*User, error)
@@ -30,6 +33,7 @@ type ParticipanteRepository interface {
 	ObtenerParticipantesParaEnvioQR() []Participante
 	BuscarParticipantePorDocumento(documento string) Participante
 	RegistrarAsistencia(participanteID int64) bool
+	MarcarEstadoEnvioQR(documento string, exito bool, detalle string, enviadoAt *time.Time) error
 }
 
 type EstadisticasRepository interface {

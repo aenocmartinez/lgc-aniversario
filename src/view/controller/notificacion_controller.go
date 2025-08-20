@@ -14,6 +14,8 @@ import (
 func EnviarEmailConQR(c *gin.Context) {
 
 	enviarQR := usecase.NewCorreoEnvioQRUseCase(di.GetContainer().GetParticipanteRepository(), email.NewEmailService(email.GetEmailConfig()))
+	enviarQR.BatchSize = 50
+	enviarQR.Workers = 3
 	err := enviarQR.Execute()
 	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})

@@ -165,7 +165,7 @@
   </section>
 
   <section>
-    <div class="section-title">Avance hacia la Meta (400)</div>
+    <div class="section-title">Avance hacia la Meta (260)</div>
     <div class="chart-wrapper">
       <canvas id="avanceChart"></canvas>
       <div class="chart-text" id="avancePorcentaje">0%</div>
@@ -193,7 +193,7 @@
     const viernesDomingo = data.TotalInscritosViernes || 0;
     const sabadoPresencial = data.TotalPresencialesSabado || 0;
     const sabadoVirtual = data.TotalVirtualesSabado || 0;
-    const cupoMax = data.CupoMaximoPresencialSabado || 400;
+    const cupoMax = data.CupoMaximoPresencialSabado || 260;
     const restante = data.CupoRestanteSabado || 0;
     const porcentaje = (data.PorcentajeAvanceMeta || 0).toFixed(1);
 

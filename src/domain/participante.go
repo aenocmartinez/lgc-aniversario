@@ -1,6 +1,9 @@
 package domain
 
-import "lgc/src/view/dto"
+import (
+	"lgc/src/view/dto"
+	"time"
+)
 
 type Participante struct {
 	id                   int64
@@ -14,6 +17,8 @@ type Participante struct {
 	ciudad               string
 	habeasData           bool
 	asistenciaConfirmada bool
+	qrEnviado            bool
+	qrEnviadoAt          *time.Time
 	inscripcion          *Inscripcion
 	participanteRepo     ParticipanteRepository
 }
@@ -127,6 +132,26 @@ func (p *Participante) Existe() bool {
 
 func (p *Participante) RegistrarAsistencia() bool {
 	return p.participanteRepo.RegistrarAsistencia(p.id)
+}
+
+func (p *Participante) SetQREnviado(v bool) {
+	p.qrEnviado = v
+}
+
+func (p *Participante) SetQREnviadoAt(t *time.Time) {
+	p.qrEnviadoAt = t
+}
+
+func (p *Participante) GetQREnviado() bool {
+	return p.qrEnviado
+}
+
+func (p *Participante) GetQREnviadoAt() *time.Time {
+	return p.qrEnviadoAt
+}
+
+func (p *Participante) YaFueEnviadoQR() bool {
+	return p.qrEnviado
 }
 
 func (p *Participante) ToDTO() dto.ParticipanteDTO {

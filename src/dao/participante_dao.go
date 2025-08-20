@@ -4,6 +4,7 @@ import (
 	"lgc/src/domain"
 	"lgc/src/view/dto"
 	"strings"
+	"time"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -40,27 +41,47 @@ func (r *ParticipanteDao) ObtenerParticipantesParaLogistica() []dto.ReporteLogis
 }
 
 func (r *ParticipanteDao) ObtenerParticipantesParaEnvioQR() []domain.Participante {
-	var rawResults []struct {
+	type rowT struct {
+		ID             int64
 		Nombre         string
 		Documento      string
 		Email          string
 		DiasAsistencia string
+		QREnviado      bool
+		QREnviadoAt    *time.Time
 	}
 
+	var rows []rowT
+
 	r.db.Table("participantes AS p").
-		Select("p.nombre_completo AS nombre, p.numero_documento AS documento, p.correo_electronico As email, p.dias_asistencia as DiasAsistencia").
+		Select(`
+			p.id                                   AS id,
+			p.nombre_completo                      AS nombre,
+			p.numero_documento                     AS documento,
+			p.correo_electronico                   AS email,
+			p.dias_asistencia                      AS dias_asistencia,
+			p.qr_enviado                           AS qr_enviado,
+			p.qr_enviado_at                        AS qr_enviado_at
+		`).
 		Joins("INNER JOIN inscripciones i ON i.id = p.inscripcion_id").
 		Where("i.estado = ?", "Aprobada").
-		Where("p.modalidad <> ?", "virtual").
-		Scan(&rawResults)
+		Where("LOWER(p.modalidad) <> ?", "virtual").
+		Where("p.qr_enviado = ?", false).
+		Order("p.id ASC").
+		Scan(&rows)
 
-	var participantes []domain.Participante
-	for _, row := range rawResults {
+	participantes := make([]domain.Participante, 0, len(rows))
+	for _, rrow := range rows {
 		p := domain.NewParticipante(r)
-		p.SetNombre(row.Nombre)
-		p.SetDocumento(row.Documento)
-		p.SetEmail(row.Email)
-		p.SetDiasAsistencia(row.DiasAsistencia)
+		p.SetID(rrow.ID)
+		p.SetNombre(rrow.Nombre)
+		p.SetDocumento(rrow.Documento)
+		p.SetEmail(strings.TrimSpace(rrow.Email))
+		p.SetDiasAsistencia(strings.TrimSpace(rrow.DiasAsistencia))
+
+		p.SetQREnviado(rrow.QREnviado)
+		p.SetQREnviadoAt(rrow.QREnviadoAt)
+
 		participantes = append(participantes, *p)
 	}
 
@@ -74,6 +95,8 @@ func (r *ParticipanteDao) BuscarParticipantePorDocumento(documento string) domai
 		Documento            string
 		Modalidad            string
 		DiasAsistencia       string
+		QREnviado            bool
+		QREnviadoAt          *time.Time
 		AsistenciaConfirmada bool
 	}
 
@@ -84,9 +107,10 @@ func (r *ParticipanteDao) BuscarParticipantePorDocumento(documento string) domai
 			p.numero_documento AS documento,
 			p.modalidad,
 			p.dias_asistencia,
+			p.qr_enviado,
+			p.qr_enviado_at,
 			EXISTS (
-				SELECT 1
-				FROM participante_asistencia pa
+				SELECT 1 FROM participante_asistencia pa
 				WHERE pa.participante_id = p.id
 			) AS asistencia_confirmada
 		`).
@@ -104,6 +128,8 @@ func (r *ParticipanteDao) BuscarParticipantePorDocumento(documento string) domai
 	p.SetModalidad(row.Modalidad)
 	p.SetDiasAsistencia(row.DiasAsistencia)
 	p.SetAsistenciaConfirmada(row.AsistenciaConfirmada)
+	p.SetQREnviado(row.QREnviado)
+	p.SetQREnviadoAt(row.QREnviadoAt)
 
 	return *p
 }
@@ -127,4 +153,36 @@ func (r *ParticipanteDao) RegistrarAsistencia(participanteID int64) bool {
 	).Create(&pa).Error
 
 	return err == nil
+}
+
+func (r *ParticipanteDao) MarcarEstadoEnvioQR(documento string, exito bool, detalle string, enviadoAt *time.Time) error {
+	updates := map[string]any{
+		"qr_enviado":         exito,
+		"qr_enviado_detalle": detalle,
+	}
+
+	if exito {
+		if enviadoAt != nil {
+			updates["qr_enviado_at"] = *enviadoAt
+		} else {
+			updates["qr_enviado_at"] = gorm.Expr("CURRENT_TIMESTAMP")
+		}
+
+		if detalle == "" {
+			updates["qr_enviado_detalle"] = "OK"
+		}
+	}
+
+	tx := r.db.Table("participantes").
+		Where("numero_documento = ?", documento).
+		Clauses(clause.Locking{Strength: "UPDATE"}).
+		Updates(updates)
+
+	if tx.Error != nil {
+		return tx.Error
+	}
+	if tx.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
 }

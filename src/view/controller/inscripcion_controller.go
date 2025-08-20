@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"lgc/src/infraestructure/di"
 	"lgc/src/infraestructure/util"
 	usecase "lgc/src/usecase/inscripcion"
@@ -19,6 +20,16 @@ func RealizarInscripcion(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
+	}
+
+	if req.FormaPago != "efectivo" {
+		for _, participante := range req.Participantes {
+			if participante.Modalidad != "virtual" {
+				fmt.Println("Cupos disponibles para el día sábado. Cerradas inscripciones para viernes y domingo")
+				c.JSON(http.StatusOK, gin.H{"message": "Cupos disponibles para el día sábado. Cerradas inscripciones para viernes y domingo"})
+				return
+			}
+		}
 	}
 
 	realizarInscripcion := usecase.NewRealizarInscripcionUseCase(
