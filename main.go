@@ -35,6 +35,10 @@ func main() {
 		c.HTML(http.StatusOK, "dashboard_full.html", gin.H{})
 	})
 
+	r.GET("/lista-de-inscritos", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "lista_de_inscritos.html", gin.H{})
+	})
+
 	// Login
 	r.POST("/login", controller.Login)
 
@@ -51,6 +55,7 @@ func main() {
 	r.GET("/participantes/buscar", controller.BuscarParticipante)
 	r.GET("/participantes/visualizar", controller.VisualizarParticipante)
 	r.POST("/participantes/registrar-asistencia", controller.ConfirmarAsistencia)
+	r.GET("/estadisticas/asistencias-confirmadas", controller.AsistenciasConfirmadas)
 
 	protected := r.Group("/api")
 	protected.Use(middleware.AuthMiddleware())

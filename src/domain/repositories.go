@@ -34,6 +34,7 @@ type ParticipanteRepository interface {
 	BuscarParticipantePorDocumento(documento string) Participante
 	RegistrarAsistencia(participanteID int64) bool
 	MarcarEstadoEnvioQR(documento string, exito bool, detalle string, enviadoAt *time.Time) error
+	GetAsistenciasConfirmadas() int64
 }
 
 type EstadisticasRepository interface {

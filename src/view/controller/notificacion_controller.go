@@ -60,3 +60,12 @@ func ConfirmarAsistencia(c *gin.Context) {
 func VisualizarParticipante(c *gin.Context) {
 	c.HTML(http.StatusOK, "visualizar.html", nil)
 }
+
+func AsistenciasConfirmadas(c *gin.Context) {
+	participanteRepo := di.GetContainer().GetParticipanteRepository()
+	asistencias := usecaseParticipante.NewObtenerAsistenciasConfirmadasUseCase(participanteRepo)
+
+	response := asistencias.Execute()
+
+	c.JSON(response.StatusCode, response)
+}

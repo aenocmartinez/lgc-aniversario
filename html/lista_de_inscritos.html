@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Listado de Inscritos</title>
+  <link rel="icon" type="image/png" href="assets/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&family=Lato&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --verde: #1b3c2a; --naranja: #c16c4f; --fondo: #fdfaed; --blanco: #ffffff;
+      --grisBorde: #d9d9d9; --grisTexto: #334155; --ok: #0a7a3d;
+    }
+    * { box-sizing: border-box; }
+    body { margin:0; padding:20px 40px; font-family:'Lato',sans-serif; background:var(--fondo); color:var(--verde); }
+    header { display:flex; align-items:center; gap:20px; margin-bottom:24px; justify-content:center; }
+    header img { height:64px; }
+    header h1 { font-family:'Poppins',sans-serif; font-size:2rem; margin:0; color:var(--verde); }
+
+    .section-title { font-family:'Poppins',sans-serif; font-size:1.3rem; margin:6px 0 14px; text-align:center; color:var(--verde); position:relative; }
+    .section-title::after { content:''; display:block; width:80px; height:4px; background:var(--naranja); margin:10px auto 0; border-radius:2px; }
+
+    .toolbar { display:grid; grid-template-columns:1fr auto; gap:12px; align-items:center; margin:0 auto 12px; max-width:1100px; }
+    .search { display:flex; background:var(--blanco); border:1px solid var(--grisBorde); border-radius:999px; padding:10px 14px; box-shadow:0 4px 15px rgba(0,0,0,.05); align-items:center; gap:10px; }
+    .search input { border:0; outline:none; width:100%; font-size:1rem; color:var(--grisTexto); background:transparent; }
+    .search input::placeholder { color:#94a3b8; }
+
+    .btn { border:0; cursor:pointer; padding:8px 12px; border-radius:10px; font-weight:700; box-shadow:0 4px 12px rgba(0,0,0,.06); transition:transform .15s ease, box-shadow .15s ease; }
+    .btn:active { transform:scale(.98); }
+    .btn-secondary { background:var(--blanco); color:var(--verde); border:1px solid var(--grisBorde); }
+    .btn-outline { background:var(--blanco); color:var(--naranja); border:1px solid var(--naranja); }
+
+    .resumen { display:grid; grid-template-columns:repeat(2,minmax(220px,1fr)); gap:12px; max-width:1100px; margin:0 auto 14px; }
+    .card { background:var(--blanco); border:1px solid var(--grisBorde); border-radius:16px; padding:14px; box-shadow:0 6px 18px rgba(0,0,0,.06); }
+    .card h3 { margin:0 0 6px; font-size:1rem; color:var(--grisTexto); }
+    .card .numero { font-family:'Poppins',sans-serif; font-size:1.8rem; color:var(--naranja); }
+
+    .meta-row { display:flex; justify-content:space-between; align-items:center; gap:12px; margin:6px auto 10px; max-width:1100px; color:var(--grisTexto); font-size:.95rem; }
+
+    .table-wrap { overflow:auto; background:var(--blanco); border:1px solid var(--grisBorde); border-radius:16px; box-shadow:0 6px 18px rgba(0,0,0,.06); padding:8px; max-width:1100px; margin:0 auto; }
+    table { width:100%; border-collapse:collapse; font-size:.98rem; min-width:900px; }
+    thead th { background:var(--verde); color:var(--blanco); position:sticky; top:0; z-index:1; text-align:left; padding:12px 14px; font-weight:700; }
+    tbody td { border-top:1px solid #eee; padding:12px 14px; color:var(--grisTexto); background:var(--blanco); vertical-align:middle; }
+    tbody tr:hover td { background:#faf7ef; }
+    .participante { font-weight:700; color:var(--verde); }
+
+    .badge { padding:4px 8px; border-radius:999px; font-size:.85rem; font-weight:700; display:inline-block; border:1px solid transparent; }
+    .badge-asist-ok { background:#e6f7ff; color:#075985; border-color:#bae6fd; }
+    .badge-asist-no { background:#fff1f2; color:#9f1239; border-color:#fecdd3; }
+
+    .paginator { display:flex; gap:6px; justify-content:center; align-items:center; margin:16px auto 0; flex-wrap:wrap; max-width:1100px; }
+    .page-btn { border:1px solid var(--grisBorde); background:var(--blanco); color:var(--grisTexto); border-radius:10px; padding:8px 12px; cursor:pointer; min-width:42px; text-align:center; font-weight:600; }
+    .page-btn[disabled]{ opacity:.45; cursor:not-allowed; }
+    .page-btn.active { background:var(--naranja); color:var(--blanco); border-color:var(--naranja); }
+
+    @media (max-width: 720px){
+      body{ padding:16px; }
+      .toolbar{ grid-template-columns:1fr; }
+      .resumen{ grid-template-columns:1fr; }
+      .meta-row{ flex-direction:column; align-items:flex-start; gap:6px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="assets/logo-lgc.png" alt="Logo LGC" />
+    <h1>Lista de Inscritos</h1>
+  </header>
+
+  <section>
+    <div class="section-title">Búsqueda y Listado</div>
+
+    <div class="toolbar">
+      <div class="search" title="Busca por nombre (sin tildes) o documento">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16" style="color:#64748b;">
+          <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 1 0 1.415-1.415l-3.85-3.85zm-5.242 1.156a5 5 0 1 1 0-10.001 5 5 0 0 1 0 10z"/>
+        </svg>
+        <input id="searchInput" type="text" placeholder="Buscar por nombre o documento...">
+      </div>
+      <button id="btnLimpiar" class="btn btn-secondary">Limpiar</button>
+    </div>
+
+    <!-- Resumen dinámico -->
+    <div class="resumen">
+      <div class="card">
+        <h3>Total Aprobados</h3>
+        <div class="numero" id="totalAprobados">0</div>
+      </div>
+      <div class="card">
+        <h3>Asistencias Confirmadas</h3>
+        <div class="numero" id="totalConfirmadas">0</div>
+      </div>
+    </div>
+
+    <div class="meta-row">
+      <div id="totalesInfo">Cargando...</div>
+      <div id="resultadoInfo"></div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Documento</th>
+            <th>Modalidad</th>
+            <th>Días</th>
+            <th>Asistencia</th>
+            <th>Manilla</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tablaBody">
+          <tr><td colspan="7">Cargando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div id="paginador" class="paginator" aria-label="Paginación"></div>
+  </section>
+
+  <script>
+    // Polyfill muy simple de CSS.escape por compatibilidad
+    if (typeof CSS === 'undefined' || typeof CSS.escape !== 'function') {
+      window.CSS = window.CSS || {};
+      CSS.escape = function(sel) {
+        return (sel+'').replace(/([ #;?%&,.+*~\':"!^$[\]()=>|/@])/g,'\\$1');
+      };
+    }
+
+    // ===== utilidades =====
+    function normalize(str) {
+      return (str || "")
+        .toString().trim().toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/ß/g, 'ss');
+    }
+    function onlyDigits(str) { return (str || "").replace(/\D+/g, ''); }
+
+    const PAGE_SIZE = 25;
+    let rawInscripciones = [];
+    let flat = [];        // base: solo Aprobadas y NO virtuales
+    let filtered = [];    // tras búsqueda
+    let currentPage = 1;
+
+    // ENDPOINTS
+    const endpoint = 'https://dockerapps.pulzo.com/lgc-aniversario/estadisticas/inscripciones';
+    const confirmarAsistenciaURL = 'https://dockerapps.pulzo.com/lgc-aniversario/participantes/registrar-asistencia';
+    // Endpoint de conteo (tu API devuelve {code:200, message:"", data:N})
+    const confirmedStatsEndpoint = 'https://dockerapps.pulzo.com/lgc-aniversario/estadisticas/asistencias-confirmadas';
+
+    let confirmedCount = 0; // contador global visible en el resumen
+
+    async function fetchData() {
+      const res = await fetch(endpoint, { cache: 'no-store' });
+      if (!res.ok) throw new Error('Error al cargar inscripciones');
+      const json = await res.json();
+      return json?.data ?? [];
+    }
+
+    async function readConfirmedCount() {
+      const res = await fetch(confirmedStatsEndpoint, { cache: 'no-store' });
+      if (!res.ok) throw new Error('Error al cargar conteo de confirmadas');
+      const json = await res.json();
+      const val = Number(json?.data ?? 0); // { code:200, message:"", data:N }
+      return Number.isFinite(val) ? val : 0;
+    }
+
+    function asistenciaBadge(confirmada) {
+      return confirmada
+        ? `<span class="badge badge-asist-ok">Confirmada</span>`
+        : `<span class="badge badge-asist-no">No confirmada</span>`;
+    }
+
+    function manillaTexto(diasAsistencia) {
+      const d = normalize(diasAsistencia);
+      return d === 'sabado' ? 'Manilla naranja' : 'Manilla verde';
+    }
+
+    function flattenAndFilter(inscripciones) {
+      const rows = [];
+      for (const ins of inscripciones) {
+        const estado = normalize((ins.estado || '').trim());
+        if (estado !== 'aprobada') continue; // SOLO aprobadas
+
+        const participantes = Array.isArray(ins.participantes) ? ins.participantes : [];
+        for (const p of participantes) {
+          const modalidad = (p.modalidad || '').trim();
+          if (normalize(modalidad) === 'virtual') continue; // excluir virtual
+
+          const nombre = (p.nombre || '').trim();
+          const documento = (p.documento || '').toString().trim();
+
+          rows.push({
+            nombre,
+            documento,
+            modalidad,
+            dias_asistencia: (p.dias_asistencia || '').trim(),
+            asistencia_confirmada: !!p.asistencia_confirmada,
+
+            _normNombre: normalize(nombre),
+            _digitsDocumento: onlyDigits(documento),
+          });
+        }
+      }
+      return rows;
+    }
+
+    function updateResumen() {
+      document.getElementById('totalAprobados').textContent = flat.length;
+      document.getElementById('totalConfirmadas').textContent = confirmedCount;
+    }
+
+    function renderTable(page = 1) {
+      const tbody = document.getElementById('tablaBody');
+      tbody.innerHTML = '';
+
+      const total = filtered.length;
+      const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+      currentPage = Math.min(Math.max(1, page), totalPages);
+
+      const start = (currentPage - 1) * PAGE_SIZE;
+      const end = Math.min(start + PAGE_SIZE, total);
+      const slice = filtered.slice(start, end);
+
+      if (slice.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7">No hay resultados para mostrar.</td></tr>`;
+      } else {
+        const frag = document.createDocumentFragment();
+        for (const row of slice) {
+          const tr = document.createElement('tr');
+          tr.setAttribute('data-doc', row.documento); // para actualizar en caliente esa fila
+
+          const puedeConfirmar = !row.asistencia_confirmada;
+
+          tr.innerHTML = `
+            <td class="participante">${row.nombre}</td>
+            <td>${row.documento || '—'}</td>
+            <td style="text-transform: capitalize;">${row.modalidad || '—'}</td>
+            <td>${row.dias_asistencia || '—'}</td>
+            <td class="cell-asistencia">${asistenciaBadge(row.asistencia_confirmada)}</td>
+            <td>${manillaTexto(row.dias_asistencia)}</td>
+            <td class="cell-acciones">
+              ${puedeConfirmar
+                ? `<button class="btn btn-outline btn-confirmar" data-doc="${row.documento}">Confirmar asistencia</button>`
+                : `<button class="btn btn-secondary" disabled>Confirmada</button>`
+              }
+            </td>
+          `;
+          frag.appendChild(tr);
+        }
+        tbody.appendChild(frag);
+
+        // vincular botones confirmar
+        document.querySelectorAll('.btn-confirmar').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+            const documento = e.currentTarget.getAttribute('data-doc');
+            await confirmarAsistencia(documento, e.currentTarget);
+          });
+        });
+      }
+
+      document.getElementById('resultadoInfo').textContent =
+        `Mostrando ${slice.length} de ${total} resultado(s). Página ${currentPage}/${totalPages}`;
+
+      renderPaginator(totalPages);
+    }
+
+    function renderPaginator(totalPages) {
+      const cont = document.getElementById('paginador');
+      cont.innerHTML = '';
+      const makeBtn = (label, page, disabled = false, active = false) => {
+        const btn = document.createElement('button');
+        btn.className = 'page-btn' + (active ? ' active' : '');
+        btn.textContent = label;
+        if (disabled) btn.setAttribute('disabled', 'true');
+        btn.addEventListener('click', () => { if (!disabled) renderTable(page); });
+        return btn;
+      };
+      cont.appendChild(makeBtn('«', 1, currentPage === 1));
+      cont.appendChild(makeBtn('‹', Math.max(1, currentPage - 1), currentPage === 1));
+      const windowSize = 5;
+      let start = Math.max(1, currentPage - Math.floor(windowSize / 2));
+      let end = Math.min(totalPages, start + windowSize - 1);
+      if (end - start + 1 < windowSize) start = Math.max(1, end - windowSize + 1);
+      for (let p = start; p <= end; p++) cont.appendChild(makeBtn(String(p), p, false, p === currentPage));
+      cont.appendChild(makeBtn('›', Math.min(totalPages, currentPage + 1), currentPage === totalPages));
+      cont.appendChild(makeBtn('»', totalPages, currentPage === totalPages));
+    }
+
+    function filterData(queryRaw) {
+      const q = normalize(queryRaw);
+      const qDigits = onlyDigits(queryRaw);
+      if (!q && !qDigits) { filtered = flat.slice(); return; }
+      filtered = flat.filter(r => {
+        const matchNombre = q ? r._normNombre.includes(q) : false;
+        const matchDoc = qDigits ? r._digitsDocumento.includes(qDigits) : false;
+        return matchNombre || matchDoc;
+      });
+    }
+
+    // === Actualización puntual de fila (sin recargar toda la tabla) ===
+    function markRowConfirmed(documento) {
+      // actualizar dataset local (flat/filtered)
+      flat.forEach(r => { if (r.documento === documento) r.asistencia_confirmada = true; });
+      filtered.forEach(r => { if (r.documento === documento) r.asistencia_confirmada = true; });
+
+      // actualizar DOM de esa fila
+      const tr = document.querySelector(`tr[data-doc="${CSS.escape(documento)}"]`);
+      if (!tr) return;
+      const cellAsistencia = tr.querySelector('.cell-asistencia');
+      const cellAcciones = tr.querySelector('.cell-acciones');
+
+      if (cellAsistencia) cellAsistencia.innerHTML = asistenciaBadge(true);
+      if (cellAcciones) cellAcciones.innerHTML = `<button class="btn btn-secondary" disabled>Confirmada</button>`;
+    }
+
+    // === Confirmación ===
+    async function confirmarAsistencia(documento, btn) {
+      if (!documento) return;
+      btn.disabled = true; btn.textContent = 'Confirmando...';
+      try {
+        const res = await fetch(confirmarAsistenciaURL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ documento })
+        });
+        if (!res.ok) throw new Error('No se pudo confirmar');
+
+        // 1) Actualiza la fila (local/DOM) sin recargar toda la tabla
+        markRowConfirmed(documento);
+
+        // 2) Optimistic update: sube el contador y muestra ya
+        confirmedCount += 1;
+        document.getElementById('totalConfirmadas').textContent = confirmedCount;
+
+        // 3) Sincroniza con el valor real del servidor
+        await refreshConfirmedStats();
+
+      } catch (err) {
+        btn.disabled = false; btn.textContent = 'Confirmar asistencia';
+        alert('⚠️ Error: ' + err.message);
+      }
+    }
+
+    // === Estadística de confirmadas (polling + on-confirm) ===
+    async function refreshConfirmedStats() {
+      try {
+        confirmedCount = await readConfirmedCount();
+        document.getElementById('totalConfirmadas').textContent = confirmedCount; // actualizar DOM directo
+      } catch (err) {
+        console.warn('Fallo conteo confirmadas:', err);
+      }
+    }
+
+    // init
+    function debounce(fn, wait=250){ let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args),wait); }; }
+    const onSearchInput = debounce((e) => { filterData(e.target.value || ''); renderTable(1); }, 250);
+
+    document.getElementById('searchInput').addEventListener('input', onSearchInput);
+    document.getElementById('btnLimpiar').addEventListener('click', () => {
+      const input = document.getElementById('searchInput');
+      input.value = ''; filterData(''); renderTable(1); input.focus();
+    });
+
+    async function init() {
+      try {
+        rawInscripciones = await fetchData();
+        flat = flattenAndFilter(rawInscripciones);   // solo Aprobadas + no Virtual
+        filtered = flat.slice();
+
+        document.getElementById('totalesInfo').textContent =
+          `Inscripciones cargadas: ${rawInscripciones.length} · Participantes considerados: ${flat.length}`;
+
+        // Carga inicial de conteo de confirmadas
+        await refreshConfirmedStats();
+
+        // Total aprobados
+        document.getElementById('totalAprobados').textContent = flat.length;
+
+        renderTable(1);
+      } catch (err) {
+        document.getElementById('tablaBody').innerHTML = `<tr><td colspan="7">⚠️ Error cargando datos: ${err.message}</td></tr>`;
+        document.getElementById('totalesInfo').textContent = 'Error al cargar';
+      }
+    }
+
+    // Polling cada minuto para sincronizar "Asistencias Confirmadas"
+    setInterval(refreshConfirmedStats, 60000);
+
+    init();
+  </script>
+</body>
+</html>

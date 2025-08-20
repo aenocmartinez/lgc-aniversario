@@ -186,3 +186,9 @@ func (r *ParticipanteDao) MarcarEstadoEnvioQR(documento string, exito bool, deta
 	}
 	return nil
 }
+
+func (r *ParticipanteDao) GetAsistenciasConfirmadas() int64 {
+	var count int64
+	r.db.Table("participante_asistencia").Count(&count)
+	return count
+}
