@@ -289,13 +289,22 @@
     }
 
     function filterData(queryRaw) {
-      const q = normalize(queryRaw);
-      const qDigits = onlyDigits(queryRaw);
-      if (!q && !qDigits) { filtered = flat.slice(); return; }
+      const raw = (queryRaw || "").trim();
+      if (!raw) { filtered = flat.slice(); return; }
+
+      // divide por espacios, comas o punto y coma; ignora vacíos
+      const tokens = raw.split(/[ ,;]+/).map(t => t.trim()).filter(Boolean);
+
       filtered = flat.filter(r => {
-        const matchNombre = q ? r._normNombre.includes(q) : false;
-        const matchDoc = qDigits ? r._digitsDocumento.includes(qDigits) : false;
-        return matchNombre || matchDoc;
+        // cada token debe coincidir: si es numérico, busca en documento; si es texto, busca en nombre normalizado
+        return tokens.every(tok => {
+          const isDigits = /^\d+$/.test(tok);
+          if (isDigits) {
+            return r._digitsDocumento.includes(tok);
+          }
+          const nTok = normalize(tok);
+          return r._normNombre.includes(nTok);
+        });
       });
     }
 
